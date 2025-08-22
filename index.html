@@ -5,110 +5,158 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Gigas - Gás e Água</title>
 
-  <!-- Manifest embutido -->
+  <!-- Favicons -->
+  <link rel="icon" type="image/png" sizes="16x16" href="favicons/favicon-16x16.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicons/favicon-32x32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="favicons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="favicons/icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="favicons/icon-512.png">
+
+  <!-- Manifest -->
   <link rel="manifest" href="manifest.json">
+
+  <!-- Cores -->
   <meta name="theme-color" content="#004aad">
-  <link rel="icon" href="icon-192.png" type="image/png">
-  <link rel="apple-touch-icon" href="icon-192.png">
+  <meta name="msapplication-TileColor" content="#004aad">
 
   <style>
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background: #f9f9f9;
-      color: #222;
+      background: #f0f4f8;
+      color: #333;
       text-align: center;
     }
-
-    /* SPLASH */
+    /* Splash */
     #splash {
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      background: #004aad;
       display: flex;
       flex-direction: column;
-      justify-content: center;
       align-items: center;
-      height: 100vh;
-      background: #004aad;
+      justify-content: center;
       color: white;
       font-size: 24px;
+      z-index: 9999;
+    }
+    #splash img {
+      width: 150px;
+      margin-bottom: 20px;
+    }
+    /* Catálogo */
+    header {
+      background: #004aad;
+      color: white;
+      padding: 15px;
+      font-size: 20px;
       font-weight: bold;
     }
-
-    #app { display: none; padding: 20px; }
-
-    h1 { color: #004aad; }
-
+    .catalogo {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 15px;
+      padding: 20px;
+    }
     .produto {
       background: white;
-      margin: 20px auto;
-      padding: 15px;
       border-radius: 10px;
-      max-width: 300px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      padding: 10px;
     }
-
     .produto img {
       width: 100%;
       border-radius: 8px;
     }
-
-    .btn-whats {
-      display: inline-block;
-      margin-top: 10px;
-      padding: 12px 18px;
-      background: #25d366;
-      color: white;
-      text-decoration: none;
-      font-weight: bold;
-      border-radius: 6px;
+    .produto h3 {
+      margin: 10px 0 5px;
+      font-size: 16px;
+      color: #004aad;
     }
-
-    .btn-whats:hover { background: #1ebe5b; }
+    .produto button {
+      background: #004aad;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .produto button:hover {
+      background: #00337a;
+    }
   </style>
 </head>
 <body>
 
-  <!-- SPLASH SCREEN -->
+  <!-- Splash -->
   <div id="splash">
-    🚚 GIGAS<br>
-    Seu Gás Chega Rápido!
+    <img src="favicons/icon-192.png" alt="Gigas">
+    <p>Gigas - Gás e Água</p>
   </div>
 
-  <!-- APP -->
-  <div id="app">
-    <h1>Catálogo de Produtos</h1>
+  <!-- Header -->
+  <header>Catálogo Gigas</header>
 
+  <!-- Catálogo -->
+  <div class="catalogo">
     <div class="produto">
-      <img src="p13.jpg" alt="Botijão P13">
-      <h2>Botijão P13</h2>
-      <a class="btn-whats" href="https://wa.me/5551989448805?text=Quero%20um%20Botijão%20P13" target="_blank">Peça Agora</a>
+      <img src="img/IMG_6139.png" alt="Água Mineral 20L">
+      <h3>Água Mineral 20L</h3>
+      <button onclick="pedidoWhatsApp('Água Mineral 20L')">Pedir</button>
     </div>
 
     <div class="produto">
-      <img src="p20.jpg" alt="Botijão P20">
-      <h2>Botijão P20</h2>
-      <a class="btn-whats" href="https://wa.me/5551989448805?text=Quero%20um%20Botijão%20P20" target="_blank">Peça Agora</a>
+      <img src="img/IMG_6138.png" alt="Botijão de Gás 13kg">
+      <h3>Botijão de Gás 13kg</h3>
+      <button onclick="pedidoWhatsApp('Botijão de Gás 13kg')">Pedir</button>
     </div>
 
     <div class="produto">
-      <img src="p45.jpg" alt="Botijão P45">
-      <h2>Botijão P45</h2>
-      <a class="btn-whats" href="https://wa.me/5551989448805?text=Quero%20um%20Botijão%20P45" target="_blank">Peça Agora</a>
+      <img src="img/IMG_6169.jpeg" alt="Água Mineral 10L">
+      <h3>Água Mineral 10L</h3>
+      <button onclick="pedidoWhatsApp('Água Mineral 10L')">Pedir</button>
+    </div>
+
+    <div class="produto">
+      <img src="img/IMG_6170.jpeg" alt="Água Mineral 5L">
+      <h3>Água Mineral 5L</h3>
+      <button onclick="pedidoWhatsApp('Água Mineral 5L')">Pedir</button>
+    </div>
+
+    <div class="produto">
+      <img src="img/IMG_6173.jpeg" alt="Copo de Água 500ml (cx)">
+      <h3>Copo de Água 500ml (cx)</h3>
+      <button onclick="pedidoWhatsApp('Copo de Água 500ml')">Pedir</button>
+    </div>
+
+    <div class="produto">
+      <img src="img/IMG_6174.jpeg" alt="Galão de Água 1,5L (cx)">
+      <h3>Galão de Água 1,5L (cx)</h3>
+      <button onclick="pedidoWhatsApp('Galão de Água 1,5L')">Pedir</button>
     </div>
   </div>
 
-  <!-- Scripts -->
   <script>
-    // Splash → App
-    setTimeout(() => {
-      document.getElementById('splash').style.display = 'none';
-      document.getElementById('app').style.display = 'block';
-    }, 2000);
+    // Splash screen
+    window.addEventListener("load", () => {
+      setTimeout(() => {
+        document.getElementById("splash").style.display = "none";
+      }, 2000);
+    });
 
-    // Registrar Service Worker
+    // Função WhatsApp
+    function pedidoWhatsApp(produto) {
+      const telefone = "5551999999999"; // <-- troque pelo número da empresa
+      const msg = encodeURIComponent(`Olá, gostaria de pedir: ${produto}`);
+      window.open(`https://wa.me/${telefone}?text=${msg}`, "_blank");
+    }
+
+    // Service Worker
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("sw.js")
-        .then(() => console.log("✅ Service Worker registrado"))
-        .catch(err => console.error("❌ Erro no SW:", err));
+        .then(() => console.log("Service Worker registrado!"))
+        .catch(err => console.error("Erro SW:", err));
     }
   </script>
 </body>
