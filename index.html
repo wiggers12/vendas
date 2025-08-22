@@ -4,178 +4,112 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Gigas - Gás e Água</title>
+
+  <!-- Manifest embutido -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#004aad">
+  <link rel="icon" href="icon-192.png" type="image/png">
+  <link rel="apple-touch-icon" href="icon-192.png">
+
   <style>
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background: #f5f8ff;
-      color: #003366;
+      background: #f9f9f9;
+      color: #222;
+      text-align: center;
     }
 
-    /* Splash */
+    /* SPLASH */
     #splash {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: #004aad;
       display: flex;
-      align-items: center;
-      justify-content: center;
       flex-direction: column;
-      z-index: 9999;
-      color: #fff;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: #004aad;
+      color: white;
       font-size: 24px;
       font-weight: bold;
-      animation: fadeOut 1s ease forwards;
-      animation-delay: 3s;
-    }
-    #splash img { width: 120px; margin-bottom: 15px; }
-    @keyframes fadeOut { to { opacity: 0; visibility: hidden; } }
-
-    header {
-      text-align: center;
-      padding: 20px;
-      background: #004aad;
-      color: #fff;
     }
 
-    .catalogo {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 20px;
-      padding: 20px;
-    }
+    #app { display: none; padding: 20px; }
+
+    h1 { color: #004aad; }
+
     .produto {
-      background: #fff;
-      border-radius: 10px;
+      background: white;
+      margin: 20px auto;
       padding: 15px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-      text-align: center;
+      border-radius: 10px;
+      max-width: 300px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
     }
-    .produto img { width: 150px; height: auto; }
-    .produto h3 { margin: 10px 0 5px; }
-    .produto p { font-size: 14px; color: #555; }
-    .btn-whatsapp {
+
+    .produto img {
+      width: 100%;
+      border-radius: 8px;
+    }
+
+    .btn-whats {
       display: inline-block;
       margin-top: 10px;
-      padding: 10px 20px;
-      background: #25D366;
+      padding: 12px 18px;
+      background: #25d366;
       color: white;
-      border-radius: 5px;
       text-decoration: none;
       font-weight: bold;
-    }
-    .btn-whatsapp:hover { background: #1ebe5d; }
-
-    /* Contato */
-    .contato {
-      background: #eef3ff;
-      padding: 30px;
-      margin-top: 30px;
-      border-radius: 10px;
-    }
-    .contato h2 {
-      text-align: center;
-      margin-bottom: 20px;
-      color: #004aad;
-    }
-    .contato p { margin: 8px 0; }
-    .contato a { color: #004aad; text-decoration: none; }
-    .mapa { margin-top: 15px; }
-
-    footer {
-      text-align: center;
-      padding: 20px;
-      background: #004aad;
-      color: #fff;
-      margin-top: 20px;
+      border-radius: 6px;
     }
 
-    /* Botão flutuante WhatsApp */
-    .whatsapp-float {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background: #25D366;
-      border-radius: 50%;
-      padding: 15px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-    }
-    .whatsapp-float img { width: 40px; height: 40px; }
+    .btn-whats:hover { background: #1ebe5b; }
   </style>
 </head>
 <body>
 
-  <!-- Splash -->
+  <!-- SPLASH SCREEN -->
   <div id="splash">
-    <img src="https://cdn-icons-png.flaticon.com/512/2907/2907415.png" alt="Caminhão Gás">
-    <div>GIGAS</div>
-    <small>Gás e Água com rapidez</small>
+    🚚 GIGAS<br>
+    Seu Gás Chega Rápido!
   </div>
 
-  <!-- Cabeçalho -->
-  <header>
-    <h1>Gigas - Gás e Água</h1>
-    <p>Peça seu botijão pelo WhatsApp</p>
-  </header>
+  <!-- APP -->
+  <div id="app">
+    <h1>Catálogo de Produtos</h1>
 
-  <!-- Catálogo -->
-  <section class="catalogo">
     <div class="produto">
-      <img src="https://i.ibb.co/t8npg2j/p13.png" alt="P13">
-      <h3>Botijão P13</h3>
-      <p>Botijão de Gás de Cozinha</p>
-      <a class="btn-whatsapp" href="https://wa.me/5551989448805?text=Olá, gostaria de pedir um Botijão P13." target="_blank">Peça Agora</a>
+      <img src="p13.jpg" alt="Botijão P13">
+      <h2>Botijão P13</h2>
+      <a class="btn-whats" href="https://wa.me/5551989448805?text=Quero%20um%20Botijão%20P13" target="_blank">Peça Agora</a>
     </div>
 
     <div class="produto">
-      <img src="https://i.ibb.co/FbCc7X4/p5.png" alt="P5">
-      <h3>Botijão P5</h3>
-      <p>Botijão de Gás de Cozinha</p>
-      <a class="btn-whatsapp" href="https://wa.me/5551989448805?text=Olá, gostaria de pedir um Botijão P5." target="_blank">Peça Agora</a>
+      <img src="p20.jpg" alt="Botijão P20">
+      <h2>Botijão P20</h2>
+      <a class="btn-whats" href="https://wa.me/5551989448805?text=Quero%20um%20Botijão%20P20" target="_blank">Peça Agora</a>
     </div>
 
     <div class="produto">
-      <img src="https://i.ibb.co/Y74Tcsd/p20.png" alt="P20">
-      <h3>Botijão P20</h3>
-      <p>Botijão para empilhadeiras</p>
-      <a class="btn-whatsapp" href="https://wa.me/5551989448805?text=Olá, gostaria de pedir um Botijão P20." target="_blank">Peça Agora</a>
+      <img src="p45.jpg" alt="Botijão P45">
+      <h2>Botijão P45</h2>
+      <a class="btn-whats" href="https://wa.me/5551989448805?text=Quero%20um%20Botijão%20P45" target="_blank">Peça Agora</a>
     </div>
+  </div>
 
-    <div class="produto">
-      <img src="https://i.ibb.co/xzLfF0R/p45.png" alt="P45">
-      <h3>Botijão P45</h3>
-      <p>Botijão para grandes demandas</p>
-      <a class="btn-whatsapp" href="https://wa.me/5551989448805?text=Olá, gostaria de pedir um Botijão P45." target="_blank">Peça Agora</a>
-    </div>
-  </section>
+  <!-- Scripts -->
+  <script>
+    // Splash → App
+    setTimeout(() => {
+      document.getElementById('splash').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+    }, 2000);
 
-  <!-- Contato -->
-  <section class="contato">
-    <h2>📍 Contato</h2>
-    <p><b>Endereços:</b></p>
-    <p>Av. Planaltina, 103 - Bom Sucesso, Gravataí - RS</p>
-    <p>Av. Benjamin Constant, 461 - Passo das Pedras, Gravataí</p>
-    <p><b>Telefone:</b> <a href="tel:5141090505">(51) 4109-0505</a></p>
-    <p><b>WhatsApp:</b> <a href="https://wa.me/5551989448805" target="_blank">(51) 98944-8805</a></p>
-    <p><b>Horários:</b></p>
-    <p>Seg a Sex: 08h às 22h</p>
-    <p>Sáb/Dom/Feriados: 08h às 22h</p>
-    <div class="mapa">
-      <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3457.6733083556!2d-51.003!3d-29.913!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x951968f7a86c%3A0xa7c5f5bbd!2sGravataí!5e0!3m2!1spt-BR!2sbr!4v1234567890" width="100%" height="200" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
-    </div>
-  </section>
-
-  <!-- Rodapé -->
-  <footer>
-    <p>📍 Entregamos em toda a região</p>
-    <p>© 2025 Gigas - Todos os direitos reservados</p>
-  </footer>
-
-  <!-- Botão Flutuante -->
-  <a class="whatsapp-float" href="https://wa.me/5551989448805?text=Olá, gostaria de fazer um pedido." target="_blank">
-    <img src="https://cdn-icons-png.flaticon.com/512/124/124034.png" alt="WhatsApp">
-  </a>
-
+    // Registrar Service Worker
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("sw.js")
+        .then(() => console.log("✅ Service Worker registrado"))
+        .catch(err => console.error("❌ Erro no SW:", err));
+    }
+  </script>
 </body>
 </html>
