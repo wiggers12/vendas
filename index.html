@@ -3,24 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GIGAS - App de Vendas</title>
-
-  <!-- Manifest + Favicon -->
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#004aad">
+  <title>App Premium de Vendas</title>
 
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
 
   <style>
-    body { margin:0; font-family: Arial, sans-serif; background:#121212; color:white; }
-    header { background:#004aad; padding:15px; text-align:center; font-size:22px; font-weight:bold; }
+    body { margin:0; font-family:Arial, sans-serif; background:#121212; color:white; }
+    header { background:#b8860b; padding:15px; text-align:center; font-size:22px; font-weight:bold; }
     nav { display:flex; justify-content:center; gap:10px; background:#1e1e1e; padding:10px; }
-    nav button { background:#004aad; border:none; padding:10px 15px; color:white; border-radius:5px; cursor:pointer; }
-    nav button:hover { background:#08306b; }
+    nav button { background:#b8860b; border:none; padding:10px 15px; color:white; border-radius:5px; cursor:pointer; }
+    nav button:hover { background:#daa520; }
     .page { display:none; padding:20px; }
-    h2 { color:#2196f3; }
+    h2 { color:#daa520; }
     .produto { background:#1e1e1e; padding:10px; border-radius:10px; margin:10px; text-align:center; }
     .produto img { width:100%; max-width:200px; border-radius:10px; }
     .produto h3 { margin:10px 0; }
@@ -28,24 +24,31 @@
     .produto button { background:#25d366; border:none; padding:10px; border-radius:5px; color:white; cursor:pointer; }
     .card { background:#1e1e1e; border-radius:10px; padding:20px; margin:20px auto; max-width:800px; }
     canvas { width:100% !important; height:300px !important; }
-    input, select { padding:8px; margin:5px; border-radius:5px; border:none; }
-    .splash { position:fixed; top:0; left:0; width:100%; height:100%; background:#004aad; display:flex; align-items:center; justify-content:center; flex-direction:column; color:white; font-size:24px; font-weight:bold; z-index:9999; }
+    input, select { padding:8px; margin:5px; border-radius:5px; border:none; width:90%; max-width:300px; }
+    button.action { background:#b8860b; padding:10px 20px; margin-top:10px; }
+    .splash { position:fixed; top:0; left:0; width:100%; height:100%; background:#121212; display:flex; align-items:center; justify-content:center; flex-direction:column; color:#daa520; font-size:24px; font-weight:bold; z-index:9999; }
+    .kpis { display:grid; grid-template-columns:repeat(auto-fit, minmax(180px,1fr)); gap:15px; margin:20px 0; }
+    .kpi { background:#1e1e1e; border-radius:10px; padding:20px; text-align:center; }
+    .kpi h3 { margin:0; font-size:16px; color:#daa520; }
+    .kpi p { font-size:22px; font-weight:bold; margin:5px 0 0; }
+    .kpi small { color:#888; }
   </style>
 </head>
 <body>
 
   <!-- Splash -->
   <div id="splash" class="splash">
-    🚀 Bem-vindo ao GIGAS<br>
-    <small>Transforme seguidores em clientes agora mesmo!</small>
+    🚀 Seu negócio digital começa aqui <br>
+    <small>👉 Coloque o nome da sua empresa</small>
   </div>
 
   <!-- Cabeçalho -->
-  <header>📱 GIGAS - App de Vendas</header>
+  <header>🌟 App Premium de Vendas</header>
   <nav>
     <button onclick="showPage('catalogo')">🛒 Catálogo</button>
     <button onclick="showPage('cliente')">👤 Cliente</button>
     <button onclick="showPage('admin')">⚙️ Empresário</button>
+    <button onclick="showPage('pagamento')">💳 Pagamentos</button>
     <button onclick="showPage('dashboard')">📊 Dashboard</button>
   </nav>
 
@@ -53,40 +56,60 @@
   <div id="catalogo" class="page">
     <h2>Catálogo de Produtos</h2>
     <div class="produto">
-      <img src="https://via.placeholder.com/200x150.png?text=Água+20L" alt="Água">
-      <h3>Água Mineral 20L</h3>
-      <p>R$ 10,00</p>
-      <button onclick="pedidoWhats('Água Mineral 20L')">Comprar</button>
+      <img src="https://via.placeholder.com/200x150.png?text=Produto+1" alt="Produto 1">
+      <h3>Produto Premium 1</h3>
+      <p>R$ 150,00</p>
+      <button onclick="pedidoWhats('Produto Premium 1 - R$150,00')">Comprar Agora</button>
     </div>
     <div class="produto">
-      <img src="https://via.placeholder.com/200x150.png?text=Botijão+P13" alt="P13">
-      <h3>Botijão P13</h3>
-      <p>R$ 120,00</p>
-      <button onclick="pedidoWhats('Botijão P13')">Comprar</button>
+      <img src="https://via.placeholder.com/200x150.png?text=Produto+2" alt="Produto 2">
+      <h3>Produto Premium 2</h3>
+      <p>R$ 200,00</p>
+      <button onclick="pedidoWhats('Produto Premium 2 - R$200,00')">Comprar Agora</button>
     </div>
   </div>
 
   <!-- Cliente -->
   <div id="cliente" class="page">
-    <h2>Cadastro do Cliente</h2>
-    <input type="text" id="nomeCliente" placeholder="Seu nome">
-    <input type="text" id="whatsCliente" placeholder="Seu WhatsApp">
-    <button onclick="cadastrarCliente()">Cadastrar</button>
+    <h2>Cadastre seus clientes</h2>
+    <input type="text" id="nomeCliente" placeholder="Nome completo">
+    <input type="text" id="whatsCliente" placeholder="WhatsApp">
+    <button class="action" onclick="cadastrarCliente()">Cadastrar</button>
     <p id="msgCliente"></p>
   </div>
 
   <!-- Admin -->
   <div id="admin" class="page">
     <h2>Painel do Empresário</h2>
+    <p>📦 Aqui você pode adicionar novos produtos e atualizar preços.</p>
     <input type="text" id="nomeProduto" placeholder="Nome do produto">
     <input type="number" id="precoProduto" placeholder="Preço">
-    <button onclick="adicionarProduto()">Adicionar Produto</button>
+    <button class="action" onclick="adicionarProduto()">Adicionar Produto</button>
     <p id="msgAdmin"></p>
+  </div>
+
+  <!-- Pagamentos -->
+  <div id="pagamento" class="page">
+    <h2>Área de Pagamentos (Simulação)</h2>
+    <p>Selecione a forma de pagamento:</p>
+    <select id="formaPagamento">
+      <option value="pix">Pix</option>
+      <option value="cartao">Cartão de Crédito</option>
+      <option value="boleto">Boleto</option>
+    </select>
+    <button class="action" onclick="simularPagamento()">Pagar Agora</button>
+    <p id="msgPagamento"></p>
   </div>
 
   <!-- Dashboard -->
   <div id="dashboard" class="page">
-    <h2>Dashboard em Tempo Real</h2>
+    <h2>Dashboard Premium</h2>
+    <div class="kpis">
+      <div class="kpi"><h3>💰 Faturamento</h3><p>R$ 25.400</p><small>Cresça 10x mais com o digital</small></div>
+      <div class="kpi"><h3>📦 Vendidos</h3><p>1.230</p><small>Venda mais, trabalhe menos</small></div>
+      <div class="kpi"><h3>👥 Clientes</h3><p>350</p><small>Transforme seguidores em clientes</small></div>
+      <div class="kpi"><h3>🚚 Entregas</h3><p>980</p><small>Agilidade é a chave do sucesso</small></div>
+    </div>
     <div class="card"><canvas id="graficoVendas"></canvas></div>
     <div class="card"><canvas id="graficoProdutos"></canvas></div>
   </div>
@@ -107,7 +130,7 @@
     let nome=document.getElementById('nomeCliente').value;
     let whats=document.getElementById('whatsCliente').value;
     localStorage.setItem('cliente',JSON.stringify({nome,whats}));
-    document.getElementById('msgCliente').innerText="✅ Cliente cadastrado com sucesso!";
+    document.getElementById('msgCliente').innerText="✅ Cliente cadastrado!";
   }
 
   // ---------------- Admin ----------------
@@ -124,24 +147,27 @@
     window.open(`https://wa.me/5551999999999?text=${encodeURIComponent(msg)}`,"_blank");
   }
 
+  // ---------------- Pagamentos ----------------
+  function simularPagamento(){
+    let forma=document.getElementById('formaPagamento').value;
+    document.getElementById('msgPagamento').innerText="✅ Pagamento aprovado via "+forma.toUpperCase()+" (simulação)";
+  }
+
   // ---------------- Dashboard ----------------
   function atualizarDashboard(){
     const ctx1=document.getElementById('graficoVendas').getContext('2d');
     new Chart(ctx1,{ type:'bar', data:{
-      labels:["Água 20L","Botijão P13"],
-      datasets:[{ label:"Vendas", data:[12,8], backgroundColor:["#2196f3","#4caf50"] }]
+      labels:["Produto 1","Produto 2","Produto 3"],
+      datasets:[{ label:"Vendas", data:[12,8,15], backgroundColor:["#daa520","#8a2be2","#ff4500"] }]
     }, options:{ plugins:{legend:{labels:{color:'#fff'}}, datalabels:{color:'#fff',anchor:'end',align:'top'}},
     scales:{x:{ticks:{color:'#fff'}},y:{ticks:{color:'#fff'}}}}, plugins:[ChartDataLabels] });
 
     const ctx2=document.getElementById('graficoProdutos').getContext('2d');
     new Chart(ctx2,{ type:'pie', data:{
-      labels:["Água 20L","Botijão P13"],
-      datasets:[{ data:[60,40], backgroundColor:["#2196f3","#4caf50"] }]
+      labels:["Produto 1","Produto 2","Produto 3"],
+      datasets:[{ data:[60,25,15], backgroundColor:["#daa520","#8a2be2","#ff4500"] }]
     }, options:{ plugins:{legend:{labels:{color:'#fff'}}}}, plugins:[ChartDataLabels] });
   }
-
-  // ---------------- SW ----------------
-  if("serviceWorker" in navigator){ navigator.serviceWorker.register("sw.js"); }
 </script>
 
 </body>
