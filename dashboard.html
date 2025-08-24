@@ -61,17 +61,21 @@ function atualizarDashboard(){
   document.getElementById("graficos").style.display="block";
 
   // 🔹 Clientes
-  let clientes=registros.filter(r=>r.tipo==="cliente");
-  let servicos=clientes.map(c=>c.servico);
-  let valores=clientes.map(c=>parseFloat(c.valor)||0);
+  let clientes=registros.filter(r=>r.tipo==="cliente").map(c=>({
+    servico: c.servico || "N/D",
+    valor: parseFloat(c.valor)||0,
+    pagamento: c.pagamento || "Não informado",
+    data: c.data || "Sem data"
+  }));
 
+  // Gráfico Vendas
   let chartVendas=echarts.init(document.getElementById('chartVendas'));
   chartVendas.setOption({
     title:{text:"📊 Vendas / Serviços", textStyle:{color:'#d4af37'}},
     tooltip:{trigger:'axis'},
-    xAxis:{type:'category', data:servicos, axisLabel:{color:'#fff'}},
+    xAxis:{type:'category', data:clientes.map(c=>c.servico), axisLabel:{color:'#fff'}},
     yAxis:{type:'value', axisLabel:{color:'#fff'}},
-    series:[{data:valores, type:'bar',
+    series:[{data:clientes.map(c=>c.valor), type:'bar',
       itemStyle:{color:'#8e44ad', shadowBlur:10, shadowColor:'#000'},
       label:{show:true, color:'#fff'}
     }]
@@ -79,25 +83,30 @@ function atualizarDashboard(){
 
   // 🔹 Estoque
   let estoque=registros.filter(r=>r.tipo==="estoque");
-  let estProdutos=estoque.map(e=>e.produto);
-  let estQtd=estoque.map(e=>e.quantidade);
   let chartEstoque=echarts.init(document.getElementById('chartEstoque'));
   chartEstoque.setOption({
     title:{text:"📦 Estoque Atual", textStyle:{color:'#d4af37'}},
-    xAxis:{type:'category', data:estProdutos, axisLabel:{color:'#fff'}},
+    xAxis:{type:'category', data:estoque.map(e=>e.produto), axisLabel:{color:'#fff'}},
     yAxis:{type:'value', axisLabel:{color:'#fff'}},
-    series:[{data:estQtd, type:'bar', itemStyle:{color:'#1abc9c'}, label:{show:true, color:'#fff'}}]
+    series:[{data:estoque.map(e=>e.quantidade), type:'bar',
+      itemStyle:{color:'#1abc9c'}, label:{show:true, color:'#fff'}
+    }]
   });
 
   // 🔹 Financeiro (Entradas x Saídas)
-  let entradas=clientes.reduce((s,c)=>s+parseFloat(c.valor||0),0);
-  let saidas=0; // por enquanto só entradas
+  let entradas=clientes.reduce((s,c)=>s+c.valor,0);
+  let caixaIniciais=registros.filter(r=>r.tipo==="caixa").reduce((s,c)=>s+(parseFloat(c.inicial)||0),0);
+  let saidas=0; // futuras despesas
   let chartFinanceiro=echarts.init(document.getElementById('chartFinanceiro'));
   chartFinanceiro.setOption({
-    title:{text:"💰 Entradas x Saídas", textStyle:{color:'#d4af37'}},
+    title:{text:"💰 Financeiro (Entradas + Caixa)", textStyle:{color:'#d4af37'}},
     legend:{textStyle:{color:'#fff'}},
     series:[{type:'pie', radius:['40%','70%'],
-      data:[{name:"Entradas",value:entradas},{name:"Saídas",value:saidas}],
+      data:[
+        {name:"Entradas (Clientes)", value:entradas},
+        {name:"Caixa Inicial", value:caixaIniciais},
+        {name:"Saídas", value:saidas}
+      ],
       itemStyle:{shadowBlur:15, shadowColor:'#000'},
       label:{color:'#fff'}
     }]
@@ -105,7 +114,7 @@ function atualizarDashboard(){
 
   // 🔹 Formas de Pagamento
   let formas={};
-  clientes.forEach(c=>{ formas[c.pagamento]=(formas[c.pagamento]||0)+parseFloat(c.valor||0); });
+  clientes.forEach(c=>{ formas[c.pagamento]=(formas[c.pagamento]||0)+c.valor; });
   let chartPagamentos=echarts.init(document.getElementById('chartPagamentos'));
   chartPagamentos.setOption({
     title:{text:"💳 Formas de Pagamento", textStyle:{color:'#d4af37'}},
@@ -118,22 +127,16 @@ function atualizarDashboard(){
     }]
   });
 
-  // 🔹 Receita no Tempo (linha suave)
+  // 🔹 Receita no Tempo
   let porData={};
-  clientes.forEach(c=>{
-    let data=c.data||"Sem data";
-    porData[data]=(porData[data]||0)+parseFloat(c.valor||0);
-  });
-  let datas=Object.keys(porData);
-  let valoresData=Object.values(porData);
+  clientes.forEach(c=>{ porData[c.data]=(porData[c.data]||0)+c.valor; });
   let chartLinha=echarts.init(document.getElementById('chartLinha'));
   chartLinha.setOption({
     title:{text:"📈 Receita ao Longo do Tempo", textStyle:{color:'#d4af37'}},
-    xAxis:{type:'category', data:datas, axisLabel:{color:'#fff'}},
+    xAxis:{type:'category', data:Object.keys(porData), axisLabel:{color:'#fff'}},
     yAxis:{type:'value', axisLabel:{color:'#fff'}},
-    series:[{data:valoresData, type:'line', smooth:true,
-      itemStyle:{color:'#1abc9c'},
-      areaStyle:{color:'rgba(26,188,156,0.4)'}
+    series:[{data:Object.values(porData), type:'line', smooth:true,
+      itemStyle:{color:'#1abc9c'}, areaStyle:{color:'rgba(26,188,156,0.4)'}
     }]
   });
 }
