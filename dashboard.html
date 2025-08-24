@@ -47,6 +47,7 @@
   <div class="chart-card"><div id="chartEstoque" class="chart"></div></div>
   <div class="chart-card"><div id="chartFinanceiro" class="chart"></div></div>
   <div class="chart-card"><div id="chartPagamentos" class="chart"></div></div>
+  <div class="chart-card"><div id="chartLinha" class="chart"></div></div>
 </div>
 
 <script>
@@ -59,22 +60,24 @@ function atualizarDashboard(){
   if(!registros || registros.length===0){ alert("Nenhum dado encontrado para este negócio."); return; }
   document.getElementById("graficos").style.display="block";
 
-  // Clientes (Vendas)
+  // 🔹 Clientes
   let clientes=registros.filter(r=>r.tipo==="cliente");
-  let nomes=clientes.map(c=>c.nome);
-  let valores=clientes.map(c=>c.valor);
   let servicos=clientes.map(c=>c.servico);
+  let valores=clientes.map(c=>parseFloat(c.valor)||0);
 
   let chartVendas=echarts.init(document.getElementById('chartVendas'));
   chartVendas.setOption({
     title:{text:"📊 Vendas / Serviços", textStyle:{color:'#d4af37'}},
-    tooltip:{trigger:'item'},
+    tooltip:{trigger:'axis'},
     xAxis:{type:'category', data:servicos, axisLabel:{color:'#fff'}},
     yAxis:{type:'value', axisLabel:{color:'#fff'}},
-    series:[{data:valores, type:'bar', itemStyle:{color:'#8e44ad', shadowBlur:10, shadowColor:'#000'}, label:{show:true, color:'#fff'}}]
+    series:[{data:valores, type:'bar',
+      itemStyle:{color:'#8e44ad', shadowBlur:10, shadowColor:'#000'},
+      label:{show:true, color:'#fff'}
+    }]
   });
 
-  // Estoque
+  // 🔹 Estoque
   let estoque=registros.filter(r=>r.tipo==="estoque");
   let estProdutos=estoque.map(e=>e.produto);
   let estQtd=estoque.map(e=>e.quantidade);
@@ -86,13 +89,12 @@ function atualizarDashboard(){
     series:[{data:estQtd, type:'bar', itemStyle:{color:'#1abc9c'}, label:{show:true, color:'#fff'}}]
   });
 
-  // Financeiro (Entradas x Saídas)
+  // 🔹 Financeiro (Entradas x Saídas)
   let entradas=clientes.reduce((s,c)=>s+parseFloat(c.valor||0),0);
   let saidas=0; // por enquanto só entradas
   let chartFinanceiro=echarts.init(document.getElementById('chartFinanceiro'));
   chartFinanceiro.setOption({
     title:{text:"💰 Entradas x Saídas", textStyle:{color:'#d4af37'}},
-    tooltip:{trigger:'item'},
     legend:{textStyle:{color:'#fff'}},
     series:[{type:'pie', radius:['40%','70%'],
       data:[{name:"Entradas",value:entradas},{name:"Saídas",value:saidas}],
@@ -101,9 +103,9 @@ function atualizarDashboard(){
     }]
   });
 
-  // Formas de Pagamento
+  // 🔹 Formas de Pagamento
   let formas={};
-  clientes.forEach(c=>{ formas[c.pagamento]=(formas[c.pagamento]||0)+c.valor; });
+  clientes.forEach(c=>{ formas[c.pagamento]=(formas[c.pagamento]||0)+parseFloat(c.valor||0); });
   let chartPagamentos=echarts.init(document.getElementById('chartPagamentos'));
   chartPagamentos.setOption({
     title:{text:"💳 Formas de Pagamento", textStyle:{color:'#d4af37'}},
@@ -113,6 +115,25 @@ function atualizarDashboard(){
       data:Object.keys(formas).map(f=>({name:f,value:formas[f]})),
       itemStyle:{shadowBlur:15, shadowColor:'#000'},
       label:{color:'#fff'}
+    }]
+  });
+
+  // 🔹 Receita no Tempo (linha suave)
+  let porData={};
+  clientes.forEach(c=>{
+    let data=c.data||"Sem data";
+    porData[data]=(porData[data]||0)+parseFloat(c.valor||0);
+  });
+  let datas=Object.keys(porData);
+  let valoresData=Object.values(porData);
+  let chartLinha=echarts.init(document.getElementById('chartLinha'));
+  chartLinha.setOption({
+    title:{text:"📈 Receita ao Longo do Tempo", textStyle:{color:'#d4af37'}},
+    xAxis:{type:'category', data:datas, axisLabel:{color:'#fff'}},
+    yAxis:{type:'value', axisLabel:{color:'#fff'}},
+    series:[{data:valoresData, type:'line', smooth:true,
+      itemStyle:{color:'#1abc9c'},
+      areaStyle:{color:'rgba(26,188,156,0.4)'}
     }]
   });
 }
