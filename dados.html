@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DashControl Business - Dados</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { margin:0; font-family:'Poppins', sans-serif; background:#0d0d0d; color:white; text-align:center; }
+    header { background:linear-gradient(90deg,#8e44ad,#b8860b); padding:15px; font-size:24px; font-weight:700; }
+    h2 { color:#d4af37; margin:20px 0; }
+
+    .cards { display:flex; justify-content:center; gap:20px; flex-wrap:wrap; margin:30px 0; }
+    .card { background:#1a1a1a; border-radius:12px; padding:25px; width:220px; height:160px; cursor:pointer;
+      display:flex; flex-direction:column; align-items:center; justify-content:center; box-shadow:0 4px 20px rgba(0,0,0,0.6);
+      transition:0.3s; }
+    .card:hover { transform:scale(1.05); background:#2c2c2c; }
+    .card h3 { margin-top:10px; color:#d4af37; }
+
+    form { max-width:700px; margin:20px auto; text-align:left; background:#1a1a1a; padding:20px; border-radius:12px; box-shadow:0 4px 20px rgba(0,0,0,0.6); }
+    label { display:block; margin:10px 0 5px; font-weight:600; color:#d4af37; }
+    input, select { padding:10px; border-radius:6px; border:none; width:100%; background:#2c2c2c; color:white; font-size:14px; }
+
+    .actions { text-align:center; margin-top:20px; }
+    button { background:#8e44ad; padding:12px 20px; margin:10px; border:none; border-radius:8px; color:white; font-weight:bold; cursor:pointer; }
+    button:hover { background:#b8860b; }
+  </style>
+</head>
+<body>
+
+<header>⚙️ DashControl Business - Inserção de Dados</header>
+
+<h2>Escolha a categoria do negócio</h2>
+<div class="cards">
+  <div class="card" onclick="abrirFormulario('delivery')">🚚<h3>Delivery</h3></div>
+  <div class="card" onclick="abrirFormulario('salao')">💇‍♀️<h3>Salão</h3></div>
+  <div class="card" onclick="abrirFormulario('ecommerce')">🛒<h3>E-commerce</h3></div>
+  <div class="card" onclick="abrirFormulario('academia')">🥋<h3>Academia</h3></div>
+</div>
+
+<div id="formArea"></div>
+
+<script>
+let dados = JSON.parse(localStorage.getItem("dashBusiness")) || [];
+
+function abrirFormulario(tipo){
+  let formHTML = `<form id="formDados"><h2>${tipo.toUpperCase()} - Cadastro</h2>`;
+
+  // campos comuns
+  formHTML += `
+    <label>Cliente:</label><input type="text" id="cliente">
+    <label>Contato:</label><input type="text" id="contato">
+    <label>Região:</label><input type="text" id="regiao">
+  `;
+
+  if(tipo==="delivery" || tipo==="ecommerce"){
+    formHTML += `
+      <label>Produto:</label><input type="text" id="produto">
+      <label>Categoria:</label><input type="text" id="categoria">
+      <label>Preço Unitário:</label><input type="number" id="preco">
+      <label>Estoque:</label><input type="number" id="estoque">
+      <label>Vendas:</label><input type="number" id="vendas">
+    `;
+  }
+
+  if(tipo==="salao"){
+    formHTML += `
+      <label>Serviço:</label><input type="text" id="servico">
+      <label>Profissional:</label><input type="text" id="profissional">
+      <label>Valor:</label><input type="number" id="valor">
+      <label>Data:</label><input type="date" id="data">
+    `;
+  }
+
+  if(tipo==="academia"){
+    formHTML += `
+      <label>Plano:</label><input type="text" id="plano">
+      <label>Mensalidade (R$):</label><input type="number" id="mensalidade">
+      <label>Aluno:</label><input type="text" id="aluno">
+      <label>Professor Responsável:</label><input type="text" id="professor">
+      <label>Data de Início:</label><input type="date" id="dataInicio">
+    `;
+  }
+
+  // financeiro
+  formHTML += `
+    <label>Receita (R$):</label><input type="number" id="receita">
+    <label>Despesas (R$):</label><input type="number" id="despesas">
+  `;
+
+  formHTML += `
+    <div class="actions">
+      <button type="button" onclick="salvar('${tipo}')">💾 Salvar</button>
+      <button type="button" onclick="limpar()">🗑️ Limpar</button>
+      <button type="button" onclick="exportarCSV()">⬇ Exportar CSV</button>
+    </div>
+  </form>`;
+
+  document.getElementById("formArea").innerHTML=formHTML;
+}
+
+function salvar(tipo){
+  let registro={tipo};
+  document.querySelectorAll("#formDados input").forEach(inp=>{
+    registro[inp.id]=inp.value;
+  });
+  dados.push(registro);
+  localStorage.setItem("dashBusiness", JSON.stringify(dados));
+  alert("✅ Registro salvo!");
+  document.getElementById("formDados").reset();
+}
+
+function limpar(){
+  if(confirm("Deseja realmente apagar todos os dados?")){
+    dados=[];
+    localStorage.removeItem("dashBusiness");
+    alert("🗑️ Dados apagados!");
+  }
+}
+
+function exportarCSV(){
+  if(dados.length===0){ alert("Nenhum dado para exportar!"); return; }
+  let csv=Object.keys(dados[0]).join(",")+"\n";
+  dados.forEach(row=>{ csv+=Object.values(row).join(",")+"\n"; });
+  let blob=new Blob([csv],{type:"text/csv"});
+  let url=URL.createObjectURL(blob);
+  let a=document.createElement("a");
+  a.href=url;
+  a.download="dados_dashcontrol.csv";
+  a.click();
+}
+</script>
+
+</body>
+</html>
