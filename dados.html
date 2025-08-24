@@ -6,127 +6,216 @@
   <title>DashControl Business - Dados</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
-    body { margin:0; font-family:'Poppins', sans-serif; background:#0d0d0d; color:white; text-align:center; }
-    header { background:linear-gradient(90deg,#8e44ad,#b8860b); padding:15px; font-size:24px; font-weight:700; }
-    h2 { color:#d4af37; margin:20px 0; }
-
-    .cards { display:flex; justify-content:center; gap:20px; flex-wrap:wrap; margin:30px 0; }
-    .card { background:#1a1a1a; border-radius:12px; padding:25px; width:220px; height:160px; cursor:pointer;
-      display:flex; flex-direction:column; align-items:center; justify-content:center; box-shadow:0 4px 20px rgba(0,0,0,0.6);
-      transition:0.3s; }
-    .card:hover { transform:scale(1.05); background:#2c2c2c; }
-    .card h3 { margin-top:10px; color:#d4af37; }
-
-    form { max-width:700px; margin:20px auto; text-align:left; background:#1a1a1a; padding:20px; border-radius:12px; box-shadow:0 4px 20px rgba(0,0,0,0.6); }
+    body { margin:0; font-family:'Poppins', sans-serif; background:#0d0d0d; color:white; }
+    header { background:linear-gradient(90deg,#8e44ad,#b8860b); padding:15px; font-size:22px; font-weight:700; text-align:center; }
+    h2 { color:#d4af37; margin:20px 0; text-align:center; }
+    section { background:#1a1a1a; padding:20px; margin:20px auto; border-radius:12px; max-width:900px; box-shadow:0 4px 20px rgba(0,0,0,0.6); }
     label { display:block; margin:10px 0 5px; font-weight:600; color:#d4af37; }
     input, select { padding:10px; border-radius:6px; border:none; width:100%; background:#2c2c2c; color:white; font-size:14px; }
-
-    .actions { text-align:center; margin-top:20px; }
-    button { background:#8e44ad; padding:12px 20px; margin:10px; border:none; border-radius:8px; color:white; font-weight:bold; cursor:pointer; }
-    button:hover { background:#b8860b; }
+    .actions { text-align:center; margin-top:15px; }
+    button { background:#8e44ad; padding:12px 20px; margin:8px; border:none; border-radius:8px; color:white; font-weight:bold; cursor:pointer; transition:0.3s; }
+    button:hover { background:#b8860b; transform:scale(1.05); }
+    .row { display:flex; flex-wrap:wrap; gap:15px; }
+    .col { flex:1; min-width:200px; }
   </style>
 </head>
 <body>
 
 <header>⚙️ DashControl Business - Inserção de Dados</header>
 
-<h2>Escolha a categoria do negócio</h2>
-<div class="cards">
-  <div class="card" onclick="abrirFormulario('delivery')">🚚<h3>Delivery</h3></div>
-  <div class="card" onclick="abrirFormulario('salao')">💇‍♀️<h3>Salão</h3></div>
-  <div class="card" onclick="abrirFormulario('ecommerce')">🛒<h3>E-commerce</h3></div>
-  <div class="card" onclick="abrirFormulario('academia')">🥋<h3>Academia</h3></div>
-</div>
+<!-- Seleção do tipo de negócio -->
+<section>
+  <h2>Escolha o tipo de negócio</h2>
+  <select id="tipoNegocio" onchange="atualizarNegocio()">
+    <option value="">-- Selecione --</option>
+    <option value="delivery">🚚 Delivery</option>
+    <option value="salao">💇‍♀️ Salão</option>
+    <option value="ecommerce">🛒 E-commerce</option>
+    <option value="academia">🥋 Academia</option>
+  </select>
+</section>
 
-<div id="formArea"></div>
+<!-- Sessão Cliente -->
+<section id="secCliente" style="display:none;">
+  <h2>👤 Cliente</h2>
+  <label>Nome do Cliente:</label>
+  <input type="text" id="clienteNome">
+  <label>Serviço/Produto:</label>
+  <input type="text" id="clienteServico" placeholder="Ex: Unha, Refrigerante, Jiu-Jitsu">
+  <label>Valor (R$):</label>
+  <input type="number" id="clienteValor">
+  <label>Forma de Pagamento:</label>
+  <select id="clientePagamento">
+    <option value="Dinheiro">💵 Dinheiro</option>
+    <option value="Pix">⚡ Pix</option>
+    <option value="Débito">💳 Débito</option>
+    <option value="Crédito">💳 Crédito</option>
+  </select>
+  <div class="actions">
+    <button onclick="registrarCliente()">💾 Registrar Cliente</button>
+  </div>
+</section>
+
+<!-- Sessão Estoque -->
+<section id="secEstoque" style="display:none;">
+  <h2>📦 Estoque</h2>
+  <div class="row">
+    <div class="col">
+      <label>Produto/Serviço:</label>
+      <input type="text" id="estoqueProduto">
+    </div>
+    <div class="col">
+      <label>Quantidade:</label>
+      <input type="number" id="estoqueQtd">
+    </div>
+    <div class="col">
+      <label>Preço Unitário (R$):</label>
+      <input type="number" id="estoquePreco">
+    </div>
+  </div>
+  <div class="actions">
+    <button onclick="adicionarEstoque()">➕ Adicionar</button>
+    <button onclick="editarEstoque()">✏️ Editar</button>
+    <button onclick="removerEstoque()">🗑️ Remover</button>
+  </div>
+</section>
+
+<!-- Sessão Financeiro -->
+<section id="secFinanceiro" style="display:none;">
+  <h2>💰 Financeiro</h2>
+  <label>Caixa Inicial do Dia (R$):</label>
+  <input type="number" id="caixaInicial">
+  <div class="actions">
+    <button onclick="atualizarCaixa()">💾 Atualizar Caixa</button>
+  </div>
+  <div class="row">
+    <div class="col"><strong>Entradas:</strong> <span id="finEntradas">0</span></div>
+    <div class="col"><strong>Saídas:</strong> <span id="finSaidas">0</span></div>
+    <div class="col"><strong>Saldo Atual:</strong> <span id="finSaldo">0</span></div>
+  </div>
+</section>
+
+<!-- Botões gerais -->
+<section id="secAcoes" style="display:none;">
+  <h2>⚡ Ações</h2>
+  <div class="actions">
+    <button onclick="exportarCSV()">⬇ Exportar CSV</button>
+    <button onclick="limparDados()">🗑️ Limpar Todos os Dados</button>
+  </div>
+</section>
 
 <script>
-let dados = JSON.parse(localStorage.getItem("dashBusiness")) || [];
+let dados = JSON.parse(localStorage.getItem("dashBusiness")) || {delivery:[], salao:[], ecommerce:[], academia:[]};
+let negocioAtual="";
 
-function abrirFormulario(tipo){
-  let formHTML = `<form id="formDados"><h2>${tipo.toUpperCase()} - Cadastro</h2>`;
-
-  // campos comuns
-  formHTML += `
-    <label>Cliente:</label><input type="text" id="cliente">
-    <label>Contato:</label><input type="text" id="contato">
-    <label>Região:</label><input type="text" id="regiao">
-  `;
-
-  if(tipo==="delivery" || tipo==="ecommerce"){
-    formHTML += `
-      <label>Produto:</label><input type="text" id="produto">
-      <label>Categoria:</label><input type="text" id="categoria">
-      <label>Preço Unitário:</label><input type="number" id="preco">
-      <label>Estoque:</label><input type="number" id="estoque">
-      <label>Vendas:</label><input type="number" id="vendas">
-    `;
+// Atualizar tipo de negócio
+function atualizarNegocio(){
+  negocioAtual=document.getElementById("tipoNegocio").value;
+  if(negocioAtual){
+    document.getElementById("secCliente").style.display="block";
+    document.getElementById("secEstoque").style.display="block";
+    document.getElementById("secFinanceiro").style.display="block";
+    document.getElementById("secAcoes").style.display="block";
   }
-
-  if(tipo==="salao"){
-    formHTML += `
-      <label>Serviço:</label><input type="text" id="servico">
-      <label>Profissional:</label><input type="text" id="profissional">
-      <label>Valor:</label><input type="number" id="valor">
-      <label>Data:</label><input type="date" id="data">
-    `;
-  }
-
-  if(tipo==="academia"){
-    formHTML += `
-      <label>Plano:</label><input type="text" id="plano">
-      <label>Mensalidade (R$):</label><input type="number" id="mensalidade">
-      <label>Aluno:</label><input type="text" id="aluno">
-      <label>Professor Responsável:</label><input type="text" id="professor">
-      <label>Data de Início:</label><input type="date" id="dataInicio">
-    `;
-  }
-
-  // financeiro
-  formHTML += `
-    <label>Receita (R$):</label><input type="number" id="receita">
-    <label>Despesas (R$):</label><input type="number" id="despesas">
-  `;
-
-  formHTML += `
-    <div class="actions">
-      <button type="button" onclick="salvar('${tipo}')">💾 Salvar</button>
-      <button type="button" onclick="limpar()">🗑️ Limpar</button>
-      <button type="button" onclick="exportarCSV()">⬇ Exportar CSV</button>
-    </div>
-  </form>`;
-
-  document.getElementById("formArea").innerHTML=formHTML;
 }
 
-function salvar(tipo){
-  let registro={tipo};
-  document.querySelectorAll("#formDados input").forEach(inp=>{
-    registro[inp.id]=inp.value;
-  });
-  dados.push(registro);
-  localStorage.setItem("dashBusiness", JSON.stringify(dados));
-  alert("✅ Registro salvo!");
-  document.getElementById("formDados").reset();
+// Registrar Cliente (gera venda, desconta estoque, atualiza financeiro)
+function registrarCliente(){
+  let nome=document.getElementById("clienteNome").value;
+  let servico=document.getElementById("clienteServico").value;
+  let valor=parseFloat(document.getElementById("clienteValor").value)||0;
+  let pagamento=document.getElementById("clientePagamento").value;
+
+  if(!nome || !servico || !valor){ alert("Preencha todos os campos do cliente!"); return; }
+
+  // desconto do estoque
+  let item=dados[negocioAtual].find(p=>p.produto===servico);
+  if(item){
+    if(item.quantidade>0){ item.quantidade--; }
+    else{ alert("❌ Estoque insuficiente!"); return; }
+  }
+
+  // salvar venda no array
+  let registro={tipo:"cliente", nome, servico, valor, pagamento, data:new Date().toLocaleDateString()};
+  dados[negocioAtual].push(registro);
+
+  // atualizar financeiro
+  atualizarFinanceiro(valor,0);
+
+  salvarLocal();
+  alert("✅ Cliente registrado com sucesso!");
+  document.getElementById("clienteNome").value="";
+  document.getElementById("clienteServico").value="";
+  document.getElementById("clienteValor").value="";
 }
 
-function limpar(){
-  if(confirm("Deseja realmente apagar todos os dados?")){
-    dados=[];
-    localStorage.removeItem("dashBusiness");
+// Estoque
+function adicionarEstoque(){
+  let produto=document.getElementById("estoqueProduto").value;
+  let quantidade=parseInt(document.getElementById("estoqueQtd").value)||0;
+  let preco=parseFloat(document.getElementById("estoquePreco").value)||0;
+  if(!produto || quantidade<=0 || preco<=0){ alert("Preencha todos os campos do estoque!"); return; }
+  dados[negocioAtual].push({tipo:"estoque", produto, quantidade, preco});
+  salvarLocal();
+  alert("✅ Produto adicionado ao estoque!");
+}
+function editarEstoque(){
+  let produto=document.getElementById("estoqueProduto").value;
+  let item=dados[negocioAtual].find(p=>p.produto===produto && p.tipo==="estoque");
+  if(item){
+    item.quantidade=parseInt(document.getElementById("estoqueQtd").value)||item.quantidade;
+    item.preco=parseFloat(document.getElementById("estoquePreco").value)||item.preco;
+    salvarLocal();
+    alert("✏️ Produto atualizado!");
+  } else alert("❌ Produto não encontrado no estoque!");
+}
+function removerEstoque(){
+  let produto=document.getElementById("estoqueProduto").value;
+  dados[negocioAtual]=dados[negocioAtual].filter(p=>!(p.produto===produto && p.tipo==="estoque"));
+  salvarLocal();
+  alert("🗑️ Produto removido do estoque!");
+}
+
+// Financeiro
+function atualizarCaixa(){
+  let inicial=parseFloat(document.getElementById("caixaInicial").value)||0;
+  dados[negocioAtual].push({tipo:"caixa", inicial, data:new Date().toLocaleDateString()});
+  salvarLocal();
+  alert("✅ Caixa inicial atualizado!");
+}
+function atualizarFinanceiro(entrada,saida){
+  let entradas=entrada||0;
+  let saidas=saida||0;
+  let saldoAtual=parseFloat(document.getElementById("finSaldo").innerText)||0;
+  saldoAtual=saldoAtual+entradas-saidas;
+  document.getElementById("finEntradas").innerText=(parseFloat(document.getElementById("finEntradas").innerText)||0)+entradas;
+  document.getElementById("finSaidas").innerText=(parseFloat(document.getElementById("finSaidas").innerText)||0)+saidas;
+  document.getElementById("finSaldo").innerText=saldoAtual;
+}
+
+// Salvar LocalStorage
+function salvarLocal(){ localStorage.setItem("dashBusiness", JSON.stringify(dados)); }
+
+// Limpar
+function limparDados(){
+  if(confirm("Deseja apagar todos os dados?")){
+    dados={delivery:[], salao:[], ecommerce:[], academia:[]};
+    salvarLocal();
     alert("🗑️ Dados apagados!");
   }
 }
 
+// Exportar CSV
 function exportarCSV(){
-  if(dados.length===0){ alert("Nenhum dado para exportar!"); return; }
-  let csv=Object.keys(dados[0]).join(",")+"\n";
-  dados.forEach(row=>{ csv+=Object.values(row).join(",")+"\n"; });
+  let registros=dados[negocioAtual];
+  if(registros.length===0){ alert("Nenhum dado para exportar!"); return; }
+  let csv=Object.keys(registros[0]).join(",")+"\n";
+  registros.forEach(r=>{ csv+=Object.values(r).join(",")+"\n"; });
   let blob=new Blob([csv],{type:"text/csv"});
   let url=URL.createObjectURL(blob);
   let a=document.createElement("a");
   a.href=url;
-  a.download="dados_dashcontrol.csv";
+  a.download=`${negocioAtual}_dados.csv`;
   a.click();
 }
 </script>
