@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DashControl Firestore Premium</title>
+
+  <!-- Firebase -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, query, setDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBDI0VtcyymdO_uowbUpP6emXiFoYf5Ubw",
+      authDomain: "dashcontrol-vendas.firebaseapp.com",
+      projectId: "dashcontrol-vendas",
+      storageBucket: "dashcontrol-vendas.firebasestorage.app",
+      messagingSenderId: "50652412621",
+      appId: "1:50652412621:web:d573bf2275c334c7a20784",
+      measurementId: "G-ZMCZNQLQFH"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    window.db = db;
+    window.collection = collection;
+    window.addDoc = addDoc;
+    window.getDocs = getDocs;
+    window.query = query;
+    window.setDoc = setDoc;
+    window.doc = doc;
+  </script>
+
+  <!-- ECharts -->
+  <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+
+  <style>
+    body { margin:0; font-family:'Poppins', sans-serif; background:#0d0d0d; color:white; }
+    header { background:linear-gradient(90deg,#8e44ad,#b8860b); padding:15px; font-size:22px; font-weight:700; text-align:center; }
+    nav { display:flex; justify-content:center; gap:10px; background:#1e1e1e; padding:10px; }
+    nav button { background:#8e44ad; border:none; padding:10px 20px; border-radius:8px; color:white; font-weight:bold; cursor:pointer; }
+    nav button:hover { background:#b8860b; }
+    .page { display:none; padding:20px; max-width:1000px; margin:auto; }
+    h2 { color:#d4af37; margin:15px 0; }
+    label { display:block; margin:10px 0 5px; font-weight:600; color:#d4af37; }
+    input, select { padding:10px; border-radius:6px; border:none; width:100%; background:#2c2c2c; color:white; }
+    button.action { margin-top:10px; padding:10px; background:#8e44ad; border:none; border-radius:8px; color:white; font-weight:bold; cursor:pointer; }
+    button.action:hover { background:#b8860b; }
+    .chart-card { background:#1a1a1a; border-radius:12px; padding:15px; margin:20px auto; box-shadow:0 4px 20px rgba(0,0,0,0.6); }
+    .chart { width:100%; height:400px; }
+  </style>
+</head>
+<body>
+
+<header>🚀 DashControl Firestore Premium</header>
+<nav>
+  <button onclick="showPage('dados')">⚙️ Inserir Dados</button>
+  <button onclick="showPage('dashboard')">📊 Dashboard</button>
+</nav>
+
+<!-- Inserção -->
+<div id="dados" class="page">
+  <h2>🛒 Registrar Venda</h2>
+  <label>Produto/Serviço:</label>
+  <input type="text" id="produtoNome">
+  <label>Valor (R$):</label>
+  <input type="number" id="produtoValor">
+  <label>Forma de Pagamento:</label>
+  <select id="produtoPagamento" onchange="toggleTroco()">
+    <option>Pix</option><option>Débito</option><option>Crédito</option><option>Dinheiro</option>
+  </select>
+  <div id="areaTroco" style="display:none;">
+    <label>Valor Recebido (R$):</label>
+    <input type="number" id="valorRecebido">
+  </div>
+  <label>Data:</label>
+  <input type="date" id="produtoData">
+  <button class="action" onclick="registrarVenda()">💾 Registrar Venda</button>
+  <p id="msgVenda"></p>
+
+  <h2>📦 Cadastro de Estoque</h2>
+  <label>Produto:</label>
+  <input type="text" id="estoqueNome">
+  <label>Quantidade:</label>
+  <input type="number" id="estoqueQtd">
+  <button class="action" onclick="adicionarEstoque()">➕ Adicionar Estoque</button>
+  <p id="msgEstoque"></p>
+
+  <h2>💰 Financeiro</h2>
+  <label>Caixa Inicial (R$):</label>
+  <input type="number" id="caixaInicial">
+  <button class="action" onclick="definirCaixa()">📌 Definir Caixa Inicial</button>
+  <p id="msgFinanceiro"></p>
+</div>
+
+<!-- Dashboard -->
+<div id="dashboard" class="page">
+  <h2>📊 Dashboard</h2>
+  <div class="chart-card"><div id="chartVendas" class="chart"></div></div>
+  <div class="chart-card"><div id="chartEstoque" class="chart"></div></div>
+  <div class="chart-card"><div id="chartPagamentos" class="chart"></div></div>
+  <div class="chart-card"><div id="chartFinanceiro" class="chart"></div></div>
+  <div class="chart-card"><div id="chartLinha" class="chart"></div></div>
+</div>
+
+<script type="module">
+  import { db, collection, addDoc, getDocs, query, setDoc, doc } from "./firebase.js";
+
+  // Toggle campo troco
+  window.toggleTroco = function(){
+    let tipo=document.getElementById("produtoPagamento").value;
+    document.getElementById("areaTroco").style.display = (tipo==="Dinheiro") ? "block" : "none";
+  }
+
+  // Registrar Venda
+  window.registrarVenda = async function(){
+    let nome=document.getElementById("produtoNome").value.trim();
+    let valor=parseFloat(document.getElementById("produtoValor").value)||0;
+    let pagamento=document.getElementById("produtoPagamento").value;
+    let recebido=parseFloat(document.getElementById("valorRecebido").value)||valor;
+    let troco = (pagamento==="Dinheiro" && recebido>valor) ? (recebido-valor) : 0;
+    let data=document.getElementById("produtoData").value || new Date().toISOString().split("T")[0];
+
+    if(!nome || valor<=0){ alert("Preencha corretamente"); return; }
+
+    await addDoc(collection(db,"vendas"), {nome, valor, pagamento, data});
+    await addDoc(collection(db,"financeiro"), {entrada: valor, saida: troco, data});
+
+    document.getElementById("msgVenda").innerText="✅ Venda registrada!";
+  }
+
+  // Adicionar Estoque
+  window.adicionarEstoque = async function(){
+    let nome=document.getElementById("estoqueNome").value.trim();
+    let qtd=parseInt(document.getElementById("estoqueQtd").value)||0;
+    if(!nome || qtd<=0){ alert("Preencha corretamente"); return; }
+    await addDoc(collection(db,"estoque"), {nome, qtd});
+    document.getElementById("msgEstoque").innerText="✅ Estoque adicionado!";
+  }
+
+  // Definir Caixa Inicial
+  window.definirCaixa = async function(){
+    let inicial=parseFloat(document.getElementById("caixaInicial").value)||0;
+    await setDoc(doc(db,"config","caixa"), {inicial});
+    document.getElementById("msgFinanceiro").innerText="✅ Caixa inicial definido!";
+  }
+
+  // Dashboard
+  async function atualizarDashboard(){
+    // Vendas
+    const qVendas = await getDocs(query(collection(db,"vendas")));
+    let vendas = {}, formas={}, porData={};
+    qVendas.forEach(doc=>{
+      let v=doc.data();
+      vendas[v.nome]=(vendas[v.nome]||0)+v.valor;
+      formas[v.pagamento]=(formas[v.pagamento]||0)+v.valor;
+      porData[v.data]=(porData[v.data]||0)+v.valor;
+    });
+
+    echarts.init(document.getElementById("chartVendas")).setOption({
+      title:{text:"🛒 Vendas por Produto", textStyle:{color:'#d4af37'}},
+      xAxis:{type:"category", data:Object.keys(vendas), axisLabel:{color:"#fff"}},
+      yAxis:{type:"value", axisLabel:{color:"#fff"}},
+      series:[{data:Object.values(vendas), type:"bar", itemStyle:{color:"#8e44ad"}}]
+    });
+
+    echarts.init(document.getElementById("chartPagamentos")).setOption({
+      title:{text:"💳 Formas de Pagamento", textStyle:{color:'#d4af37'}},
+      series:[{type:"pie", radius:["40%","70%"], data:Object.entries(formas).map(([k,v])=>({name:k,value:v}))}]
+    });
+
+    echarts.init(document.getElementById("chartLinha")).setOption({
+      title:{text:"📈 Receita no Tempo", textStyle:{color:'#d4af37'}},
+      xAxis:{type:"category", data:Object.keys(porData), axisLabel:{color:"#fff"}},
+      yAxis:{type:"value", axisLabel:{color:"#fff"}},
+      series:[{data:Object.values(porData), type:"line", smooth:true, itemStyle:{color:"#d4af37"}}]
+    });
+
+    // Estoque
+    const qEstoque = await getDocs(query(collection(db,"estoque")));
+    let estoque=[]; qEstoque.forEach(doc=>estoque.push(doc.data()));
+    echarts.init(document.getElementById("chartEstoque")).setOption({
+      title:{text:"📦 Estoque Atual", textStyle:{color:'#d4af37'}},
+      xAxis:{type:"category", data:estoque.map(e=>e.nome), axisLabel:{color:"#fff"}},
+      yAxis:{type:"value", axisLabel:{color:"#fff"}},
+      series:[{data:estoque.map(e=>e.qtd), type:"bar", itemStyle:{color:"#1abc9c"}}]
+    });
+
+    // Financeiro
+    const qFin = await getDocs(query(collection(db,"financeiro")));
+    let entradas=0, saidas=0;
+    qFin.forEach(doc=>{ let f=doc.data(); entradas+=f.entrada||0; saidas+=f.saida||0; });
+    let saldo=entradas-saidas;
+
+    echarts.init(document.getElementById("chartFinanceiro")).setOption({
+      title:{text:"💰 Entradas x Saídas", textStyle:{color:'#d4af37'}},
+      xAxis:{data:["Entradas","Saídas","Saldo"], axisLabel:{color:"#fff"}},
+      yAxis:{axisLabel:{color:"#fff"}},
+      series:[{type:"bar", data:[entradas,saidas,saldo], itemStyle:{color:"#f1c40f"}}]
+    });
+  }
+
+  // Navegação
+  window.showPage = function(id){
+    document.querySelectorAll(".page").forEach(p=>p.style.display="none");
+    document.getElementById(id).style.display="block";
+    if(id==="dashboard") atualizarDashboard();
+  }
+
+  // Inicialização
+  showPage("dados");
+</script>
+
+</body>
+</html>
