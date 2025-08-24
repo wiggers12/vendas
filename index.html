@@ -24,120 +24,142 @@
       text-align: center;
       margin-bottom: 10px;
     }
+    input, button {
+      padding: 8px;
+      margin: 5px;
+      border-radius: 5px;
+      border: none;
+    }
+    button {
+      background: #2196f3;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #1976d2;
+    }
   </style>
 </head>
 <body>
 
   <h1 style="text-align:center">📊 Dashboard GIGAS</h1>
 
-  <!-- Gráfico de Estoque -->
+  <!-- ÁREA DE ENTRADA DE DADOS -->
+  <div class="card">
+    <h2>🔧 Atualizar Estoque</h2>
+    <label>Produto:</label>
+    <select id="produtoEstoque">
+      <option>Água</option>
+      <option>GP</option>
+      <option>P13</option>
+      <option>P20</option>
+      <option>P45</option>
+      <option>P8</option>
+      <option>PB</option>
+    </select>
+    <label>Quantidade (+/-):</label>
+    <input type="number" id="qtdEstoque" value="0">
+    <button onclick="atualizarEstoque()">Atualizar</button>
+  </div>
+
+  <div class="card">
+    <h2>🚚 Registrar Entregas</h2>
+    <label>Nome do Entregador:</label>
+    <input type="text" id="entregador" placeholder="Ex: João">
+    <label>Quantidade Entregas:</label>
+    <input type="number" id="qtdEntrega" value="0">
+    <button onclick="registrarEntrega()">Registrar</button>
+  </div>
+
+  <!-- DASHBOARDS -->
   <div class="card">
     <h2>Controle de Estoque</h2>
     <canvas id="graficoEstoque"></canvas>
   </div>
 
-  <!-- Gráfico de Vendas por Mês -->
   <div class="card">
-    <h2>Vendas Mensais</h2>
-    <canvas id="graficoVendas"></canvas>
+    <h2>Entregas por Entregador</h2>
+    <canvas id="graficoEntregador"></canvas>
   </div>
 
-  <!-- Gráfico de Participação por Produto -->
-  <div class="card">
-    <h2>Participação por Produto</h2>
-    <canvas id="graficoPizza"></canvas>
-  </div>
+  <script>
+  // ------------------- Dados simulados -------------------
+  let estoque = {
+    "Água": 193,
+    "GP": 10,
+    "P13": 180,
+    "P20": 12,
+    "P45": 15,
+    "P8": 8,
+    "PB": 65
+  };
 
-<script>
-const configPadrao = {
-  plugins: {
-    legend: { labels: { color: "#fff" }},
-    datalabels: {
-      color: "#fff",
-      anchor: "end",
-      align: "top",
-      font: { weight: "bold", size: 14 }
-    }
-  },
-  scales: {
-    x: {
-      ticks: { color: "#fff" },
-      grid: { color: "rgba(255,255,255,0.1)" }
+  let entregadores = {};
+
+  // ------------------- Config padrão -------------------
+  const configPadrao = {
+    plugins: {
+      legend: { labels: { color: "#fff" }},
+      datalabels: {
+        color: "#fff",
+        anchor: "end",
+        align: "top",
+        font: { weight: "bold", size: 14 }
+      }
     },
-    y: {
-      ticks: { color: "#fff" },
-      grid: { color: "rgba(255,255,255,0.1)" }
+    scales: {
+      x: { ticks: { color: "#fff" }, grid: { color: "rgba(255,255,255,0.1)" }},
+      y: { ticks: { color: "#fff" }, grid: { color: "rgba(255,255,255,0.1)" }}
     }
+  };
+
+  // ------------------- Gráfico Estoque -------------------
+  const ctxEstoque = document.getElementById('graficoEstoque');
+  const graficoEstoque = new Chart(ctxEstoque, {
+    type: 'bar',
+    data: {
+      labels: Object.keys(estoque),
+      datasets: [{
+        label: "Estoque Atual",
+        data: Object.values(estoque),
+        backgroundColor: ["#2196f3","#ff5722","#4caf50","#9c27b0","#ff9800","#f44336","#00bcd4"]
+      }]
+    },
+    options: { plugins: {...configPadrao.plugins}, scales: configPadrao.scales },
+    plugins: [ChartDataLabels]
+  });
+
+  // ------------------- Gráfico Entregadores -------------------
+  const ctxEnt = document.getElementById('graficoEntregador');
+  const graficoEntregador = new Chart(ctxEnt, {
+    type: 'bar',
+    data: { labels: [], datasets: [{ label: "Entregas", data: [], backgroundColor: "#4caf50" }] },
+    options: { plugins: {...configPadrao.plugins}, scales: configPadrao.scales },
+    plugins: [ChartDataLabels]
+  });
+
+  // ------------------- Funções -------------------
+  function atualizarEstoque() {
+    let produto = document.getElementById('produtoEstoque').value;
+    let qtd = parseInt(document.getElementById('qtdEstoque').value);
+    estoque[produto] += qtd;
+    graficoEstoque.data.datasets[0].data = Object.values(estoque);
+    graficoEstoque.update();
   }
-};
 
-// Gráfico de Estoque
-new Chart(document.getElementById('graficoEstoque'), {
-  type: 'bar',
-  data: {
-    labels: ["Água", "GP", "P13", "P20", "P45", "P8", "PB"],
-    datasets: [{
-      label: "Estoque Atual",
-      data: [193, 10, 180, 12, 15, 8, 65],
-      backgroundColor: ["#2196f3","#ff5722","#4caf50","#9c27b0","#ff9800","#f44336","#00bcd4"]
-    }]
-  },
-  options: {
-    responsive: true,
-    plugins: {
-      title: { display: true, text: "Controle de Estoque - GIGAS", color: "#fff", font: { size: 18 }},
-      ...configPadrao.plugins
-    },
-    scales: configPadrao.scales
-  },
-  plugins: [ChartDataLabels]
-});
+  function registrarEntrega() {
+    let nome = document.getElementById('entregador').value;
+    let qtd = parseInt(document.getElementById('qtdEntrega').value);
 
-// Gráfico de Vendas por Mês
-new Chart(document.getElementById('graficoVendas'), {
-  type: 'line',
-  data: {
-    labels: ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"],
-    datasets: [{
-      label: "Vendas",
-      data: [120, 135, 110, 160, 145, 175, 190, 155, 165, 140, 130, 150],
-      borderColor: "#4caf50",
-      backgroundColor: "rgba(76,175,80,0.3)",
-      tension: 0.4,
-      fill: true
-    }]
-  },
-  options: {
-    responsive: true,
-    plugins: {
-      title: { display: true, text: "Vendas Mensais - GIGAS", color: "#fff", font: { size: 18 }},
-      ...configPadrao.plugins
-    },
-    scales: configPadrao.scales
-  },
-  plugins: [ChartDataLabels]
-});
+    if (!entregadores[nome]) entregadores[nome] = 0;
+    entregadores[nome] += qtd;
 
-// Gráfico de Participação por Produto
-new Chart(document.getElementById('graficoPizza'), {
-  type: 'pie',
-  data: {
-    labels: ["Água","GP","P13","P20","P45","P8","PB"],
-    datasets: [{
-      data: [193,10,180,12,15,8,65],
-      backgroundColor: ["#2196f3","#ff5722","#4caf50","#9c27b0","#ff9800","#f44336","#00bcd4"]
-    }]
-  },
-  options: {
-    responsive: true,
-    plugins: {
-      title: { display: true, text: "Participação por Produto (%)", color: "#fff", font: { size: 18 }},
-      ...configPadrao.plugins
-    }
-  },
-  plugins: [ChartDataLabels]
-});
-</script>
+    graficoEntregador.data.labels = Object.keys(entregadores);
+    graficoEntregador.data.datasets[0].data = Object.values(entregadores);
+    graficoEntregador.update();
+  }
+  </script>
 
 </body>
 </html>
