@@ -15,31 +15,37 @@
     .actions { text-align:center; margin-top:15px; }
     button { background:#8e44ad; padding:12px 20px; margin:8px; border:none; border-radius:8px; color:white; font-weight:bold; cursor:pointer; transition:0.3s; }
     button:hover { background:#b8860b; transform:scale(1.05); }
+    .hidden { display:none; }
   </style>
 </head>
 <body>
 
 <header>⚙️ DashControl Business - Inserção de Dados</header>
 
-<!-- Registrar Venda -->
+<!-- Registro de Venda -->
 <section>
   <h2>🛒 Registrar Venda</h2>
   <label>Produto/Serviço:</label>
-  <select id="vendaProduto"></select>
+  <input type="text" id="vendaProduto">
 
   <label>Valor (R$):</label>
-  <input type="number" id="vendaValor" readonly>
+  <input type="number" id="vendaValor">
 
   <label>Forma de Pagamento:</label>
-  <select id="vendaPagamento">
+  <select id="vendaPagamento" onchange="toggleTroco()">
     <option value="Pix">⚡ Pix</option>
     <option value="Débito">💳 Débito</option>
     <option value="Crédito">💳 Crédito</option>
     <option value="Dinheiro">💵 Dinheiro</option>
   </select>
 
+  <div id="trocoArea" class="hidden">
+    <label>Valor Recebido (R$):</label>
+    <input type="number" id="valorRecebido">
+  </div>
+
   <label>Data da Venda:</label>
-  <input type="date" id="vendaData">
+  <input type="date" id="vendaData" />
 
   <div class="actions">
     <button onclick="registrarVenda()">💾 Registrar Venda</button>
@@ -59,7 +65,7 @@
   <input type="number" id="estoqueQtd">
 
   <div class="actions">
-    <button onclick="adicionarProduto()">➕ Adicionar Produto</button>
+    <button onclick="adicionarEstoque()">➕ Adicionar</button>
   </div>
 </section>
 
@@ -70,103 +76,77 @@
   <input type="number" id="caixaInicial">
 
   <div class="actions">
-    <button onclick="definirCaixa()">📌 Definir Caixa Inicial</button>
+    <button onclick="definirCaixa()">💾 Definir Caixa Inicial</button>
   </div>
 </section>
 
 <script type="module">
   import { db } from "./firebase.js";
-  import { collection, addDoc, getDocs, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-  const selVendaProduto = document.getElementById("vendaProduto");
-  const vendaValor = document.getElementById("vendaValor");
-
-  // 🔹 Carregar produtos do Firestore
-  async function carregarProdutos() {
-    selVendaProduto.innerHTML = "";
-    const snapshot = await getDocs(collection(db, "estoque"));
-    snapshot.forEach((d) => {
-      const p = d.data();
-      let opt = document.createElement("option");
-      opt.value = d.id;
-      opt.textContent = `${p.nome} - R$${p.valor.toFixed(2)} (Qtd: ${p.quantidade ?? "Serviço"})`;
-      opt.setAttribute("data-valor", p.valor);
-      selVendaProduto.appendChild(opt);
-    });
-    if (selVendaProduto.options.length > 0) {
-      vendaValor.value = selVendaProduto.options[0].getAttribute("data-valor");
-    }
+  function toggleTroco() {
+    let pagamento = document.getElementById("vendaPagamento").value;
+    document.getElementById("trocoArea").classList.toggle("hidden", pagamento !== "Dinheiro");
   }
 
-  selVendaProduto.addEventListener("change", () => {
-    let valor = selVendaProduto.options[selVendaProduto.selectedIndex].getAttribute("data-valor");
-    vendaValor.value = valor;
-  });
-
-  // 🔹 Adicionar produto ao estoque
-  async function adicionarProduto() {
-    let nome = document.getElementById("estoqueNome").value;
+  // ➕ Adicionar Produto ao Estoque
+  async function adicionarEstoque() {
+    let nome = document.getElementById("estoqueNome").value.trim();
     let valor = parseFloat(document.getElementById("estoqueValor").value) || 0;
-    let qtd = document.getElementById("estoqueQtd").value;
-    let quantidade = qtd === "" ? null : parseInt(qtd);
+    let qtdInput = document.getElementById("estoqueQtd").value;
+    let quantidade = qtdInput === "" ? null : parseInt(qtdInput);
 
-    if (!nome || valor <= 0) {
-      alert("⚠️ Preencha nome e valor!");
-      return;
-    }
+    if (!nome || valor <= 0) { alert("⚠️ Preencha nome e valor válidos!"); return; }
 
-    await addDoc(collection(db, "estoque"), { nome, valor, quantidade });
+    await addDoc(collection(db, "estoque"), {
+      nome, valor, quantidade, criadoEm: new Date().toISOString()
+    });
+
     alert("✅ Produto adicionado!");
-    document.getElementById("estoqueNome").value = "";
-    document.getElementById("estoqueValor").value = "";
-    document.getElementById("estoqueQtd").value = "";
-    carregarProdutos();
+    document.getElementById("estoqueNome").value="";
+    document.getElementById("estoqueValor").value="";
+    document.getElementById("estoqueQtd").value="";
   }
 
-  // 🔹 Registrar Venda
+  // 💾 Registrar Venda
   async function registrarVenda() {
-    let prodId = selVendaProduto.value;
-    let valor = parseFloat(vendaValor.value) || 0;
+    let produto = document.getElementById("vendaProduto").value.trim();
+    let valor = parseFloat(document.getElementById("vendaValor").value) || 0;
     let pagamento = document.getElementById("vendaPagamento").value;
     let data = document.getElementById("vendaData").value || new Date().toISOString().split("T")[0];
 
-    if (!prodId) {
-      alert("⚠️ Selecione um produto!");
-      return;
-    }
+    if (!produto || valor <= 0) { alert("⚠️ Preencha os campos da venda!"); return; }
 
-    // Registra venda
-    await addDoc(collection(db, "vendas"), { prodId, valor, pagamento, data });
-    alert("✅ Venda registrada!");
+    let recebido = parseFloat(document.getElementById("valorRecebido").value) || valor;
+    let troco = pagamento === "Dinheiro" ? (recebido - valor) : 0;
+    if (pagamento === "Dinheiro" && recebido < valor) { alert("⚠️ Valor recebido insuficiente!"); return; }
 
-    // Atualiza financeiro
-    await addDoc(collection(db, "financeiro"), { entrada: valor, saida: 0, data });
-
-    // Atualiza estoque (reduz 1 unidade se não for serviço)
-    const snapshot = await getDocs(collection(db, "estoque"));
-    snapshot.forEach(async (d) => {
-      if (d.id === prodId) {
-        let produto = d.data();
-        if (produto.quantidade !== null && produto.quantidade > 0) {
-          await updateDoc(doc(db, "estoque", d.id), { quantidade: produto.quantidade - 1 });
-        }
-      }
+    await addDoc(collection(db, "vendas"), {
+      prodId: produto, valor, pagamento, troco, data, criadoEm: new Date().toISOString()
     });
 
-    carregarProdutos();
+    await addDoc(collection(db, "financeiro"), {
+      entrada: valor, saida: troco, data, criadoEm: new Date().toISOString()
+    });
+
+    alert("✅ Venda registrada!");
+    document.getElementById("vendaProduto").value="";
+    document.getElementById("vendaValor").value="";
+    document.getElementById("valorRecebido").value="";
   }
 
-  // 🔹 Definir caixa inicial
+  // 💰 Definir Caixa Inicial
   async function definirCaixa() {
     let inicial = parseFloat(document.getElementById("caixaInicial").value) || 0;
-    let data = new Date().toISOString().split("T")[0];
-    await addDoc(collection(db, "financeiro"), { entrada: inicial, saida: 0, data });
-    alert("✅ Caixa inicial definido!");
-  }
+    if (inicial < 0) { alert("⚠️ Valor inválido!"); return; }
 
-  // Inicializar
-  carregarProdutos();
-  document.getElementById("vendaData").value = new Date().toISOString().split("T")[0];
+    await addDoc(collection(db, "financeiro"), {
+      entrada: inicial, saida: 0, data: new Date().toISOString().split("T")[0], criadoEm: new Date().toISOString()
+    });
+
+    alert("✅ Caixa inicial definido!");
+    document.getElementById("caixaInicial").value="";
+  }
 </script>
 
 </body>
