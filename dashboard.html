@@ -3,31 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DashControl Premium 3D</title>
+  <title>DashControl Business - Dashboard</title>
 
   <!-- ECharts -->
   <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
 
-  <!-- Fonte Premium -->
+  <!-- Fonte -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 
   <style>
-    body { margin:0; font-family:'Poppins', sans-serif; background:#0d0d0d; color:white; text-align:center; }
-    header { background:linear-gradient(90deg,#8e44ad,#b8860b); padding:15px; font-size:24px; font-weight:700; }
-    h2 { color:#d4af37; margin-bottom:20px; font-weight:700; font-size:22px; }
-
-    /* Splash */
-    .splash {
-      position:fixed; top:0; left:0; width:100%; height:100%;
-      background:linear-gradient(135deg,#0d0d0d,#8e44ad,#b8860b);
-      display:flex; align-items:center; justify-content:center; flex-direction:column;
-      color:#fff; font-size:42px; font-weight:bold; z-index:9999; text-align:center;
-      animation:fadeIn 1.5s;
-    }
-    .splash small { color:#ddd; margin-top:10px; font-size:18px; }
-    @keyframes fadeIn { from{opacity:0} to{opacity:1} }
-
-    /* Dashboard */
+    body { margin:0; font-family:'Poppins', sans-serif; background:#0d0d0d; color:white; }
+    header { background:linear-gradient(90deg,#8e44ad,#b8860b); padding:15px; font-size:22px; font-weight:700; text-align:center; }
+    h2 { color:#d4af37; margin:20px 0; text-align:center; }
     .chart-card {
       background:#1a1a1a;
       border-radius:12px;
@@ -37,112 +24,98 @@
       max-width:1200px;
     }
     .chart { width:100%; height:400px; }
+    select { margin:15px auto; display:block; padding:10px; border-radius:6px; border:none; background:#2c2c2c; color:white; }
   </style>
 </head>
 <body>
 
-  <!-- Splash -->
-  <div id="splash" class="splash">
-    🚀 DashControl <br>
-    <small>Controle total em suas mãos</small>
-  </div>
+<header>📊 DashControl Business - Dashboard</header>
 
-  <!-- Cabeçalho -->
-  <header>📊 DashControl Premium 3D</header>
+<!-- Seleção do negócio -->
+<h2>Escolha o negócio</h2>
+<select id="tipoNegocio" onchange="atualizarDashboard()">
+  <option value="">-- Selecione --</option>
+  <option value="delivery">🚚 Delivery</option>
+  <option value="salao">💇‍♀️ Salão</option>
+  <option value="ecommerce">🛒 E-commerce</option>
+  <option value="academia">🥋 Academia</option>
+</select>
 
-  <!-- Dashboard -->
-  <div id="dashboard" class="page">
-    <h2>Dashboard Premium 3D</h2>
-    <div class="chart-card"><div id="chartVendas" class="chart"></div></div>
-    <div class="chart-card"><div id="chartCategoria" class="chart"></div></div>
-    <div class="chart-card"><div id="chartReceita" class="chart"></div></div>
-    <div class="chart-card"><div id="chartLinha" class="chart"></div></div>
-    <div class="chart-card"><div id="chartRegiao" class="chart"></div></div>
-  </div>
+<!-- Área de gráficos -->
+<div id="graficos" style="display:none;">
+  <div class="chart-card"><div id="chartVendas" class="chart"></div></div>
+  <div class="chart-card"><div id="chartEstoque" class="chart"></div></div>
+  <div class="chart-card"><div id="chartFinanceiro" class="chart"></div></div>
+  <div class="chart-card"><div id="chartPagamentos" class="chart"></div></div>
+</div>
 
 <script>
-  // Splash
-  setTimeout(()=>{ document.getElementById('splash').style.display='none'; atualizarDashboard(); },2000);
+let dados = JSON.parse(localStorage.getItem("dashBusiness")) || {delivery:[], salao:[], ecommerce:[], academia:[]};
 
-  // Dashboard
-  function atualizarDashboard(){
-    let registros = JSON.parse(localStorage.getItem("dashBusiness")) || [];
-    if(registros.length===0){ alert("Nenhum dado cadastrado no sistema!"); return; }
+function atualizarDashboard(){
+  let negocio=document.getElementById("tipoNegocio").value;
+  if(!negocio){ document.getElementById("graficos").style.display="none"; return; }
+  let registros=dados[negocio];
+  if(!registros || registros.length===0){ alert("Nenhum dado encontrado para este negócio."); return; }
+  document.getElementById("graficos").style.display="block";
 
-    // Normalizar registros para usar os mesmos campos do dashboard anterior
-    let produtos = registros.map(r=>{
-      return {
-        nome: r.produto || r.servico || r.plano || "Item",
-        categoria: r.categoria || r.tipo || "Outros",
-        preco: parseFloat(r.preco || r.valor || r.mensalidade || 0),
-        vendas: parseInt(r.vendas || 1),
-        estoque: parseInt(r.estoque || 0),
-        receita: parseFloat(r.receita || (r.preco && r.vendas ? r.preco*r.vendas : r.valor || r.mensalidade || 0)),
-        data: r.data || r.dataInicio || "N/D",
-        regiao: r.regiao || "Não informada"
-      }
-    });
+  // Clientes (Vendas)
+  let clientes=registros.filter(r=>r.tipo==="cliente");
+  let nomes=clientes.map(c=>c.nome);
+  let valores=clientes.map(c=>c.valor);
+  let servicos=clientes.map(c=>c.servico);
 
-    // Vendas por Produto
-    let chartVendas=echarts.init(document.getElementById('chartVendas'));
-    chartVendas.setOption({
-      title:{text:"📊 Vendas por Produto/Serviço", textStyle:{color:'#d4af37', fontSize:20}},
-      xAxis:{type:'category', data:produtos.map(p=>p.nome), axisLabel:{color:'#fff'}},
-      yAxis:{type:'value', axisLabel:{color:'#fff'}},
-      series:[{data:produtos.map(p=>p.vendas), type:'bar',
-        itemStyle:{color:'#8e44ad', shadowColor:'#000', shadowBlur:10, borderRadius:6},
-        label:{show:true, color:'#fff', fontWeight:'bold'}
-      }]
-    });
+  let chartVendas=echarts.init(document.getElementById('chartVendas'));
+  chartVendas.setOption({
+    title:{text:"📊 Vendas / Serviços", textStyle:{color:'#d4af37'}},
+    tooltip:{trigger:'item'},
+    xAxis:{type:'category', data:servicos, axisLabel:{color:'#fff'}},
+    yAxis:{type:'value', axisLabel:{color:'#fff'}},
+    series:[{data:valores, type:'bar', itemStyle:{color:'#8e44ad', shadowBlur:10, shadowColor:'#000'}, label:{show:true, color:'#fff'}}]
+  });
 
-    // Receita por Categoria
-    let categorias={}; produtos.forEach(p=>{ categorias[p.categoria]=(categorias[p.categoria]||0)+p.receita; });
-    let chartCategoria=echarts.init(document.getElementById('chartCategoria'));
-    chartCategoria.setOption({
-      title:{text:"💰 Receita por Categoria", textStyle:{color:'#d4af37', fontSize:20}},
-      xAxis:{type:'category', data:Object.keys(categorias), axisLabel:{color:'#fff'}},
-      yAxis:{type:'value', axisLabel:{color:'#fff'}},
-      series:[{data:Object.values(categorias), type:'bar',
-        itemStyle:{color:'#b8860b', shadowColor:'#000', shadowBlur:10, borderRadius:6},
-        label:{show:true, color:'#fff', fontWeight:'bold'}
-      }]
-    });
+  // Estoque
+  let estoque=registros.filter(r=>r.tipo==="estoque");
+  let estProdutos=estoque.map(e=>e.produto);
+  let estQtd=estoque.map(e=>e.quantidade);
+  let chartEstoque=echarts.init(document.getElementById('chartEstoque'));
+  chartEstoque.setOption({
+    title:{text:"📦 Estoque Atual", textStyle:{color:'#d4af37'}},
+    xAxis:{type:'category', data:estProdutos, axisLabel:{color:'#fff'}},
+    yAxis:{type:'value', axisLabel:{color:'#fff'}},
+    series:[{data:estQtd, type:'bar', itemStyle:{color:'#1abc9c'}, label:{show:true, color:'#fff'}}]
+  });
 
-    // Receita por Produto (Donut)
-    let chartReceita=echarts.init(document.getElementById('chartReceita'));
-    chartReceita.setOption({
-      title:{text:"🍩 Participação na Receita", textStyle:{color:'#d4af37', fontSize:20}},
-      series:[{
-        type:'pie', radius:['40%','70%'],
-        data:produtos.map(p=>({name:p.nome, value:p.receita})),
-        itemStyle:{shadowBlur:15, shadowColor:'#000'},
-        label:{color:'#fff', fontWeight:'bold'}
-      }]
-    });
+  // Financeiro (Entradas x Saídas)
+  let entradas=clientes.reduce((s,c)=>s+parseFloat(c.valor||0),0);
+  let saidas=0; // por enquanto só entradas
+  let chartFinanceiro=echarts.init(document.getElementById('chartFinanceiro'));
+  chartFinanceiro.setOption({
+    title:{text:"💰 Entradas x Saídas", textStyle:{color:'#d4af37'}},
+    tooltip:{trigger:'item'},
+    legend:{textStyle:{color:'#fff'}},
+    series:[{type:'pie', radius:['40%','70%'],
+      data:[{name:"Entradas",value:entradas},{name:"Saídas",value:saidas}],
+      itemStyle:{shadowBlur:15, shadowColor:'#000'},
+      label:{color:'#fff'}
+    }]
+  });
 
-    // Receita no Tempo
-    let chartLinha=echarts.init(document.getElementById('chartLinha'));
-    chartLinha.setOption({
-      title:{text:"📈 Receita ao Longo do Tempo", textStyle:{color:'#d4af37', fontSize:20}},
-      xAxis:{type:'category', data:produtos.map(p=>p.data), axisLabel:{color:'#fff'}},
-      yAxis:{type:'value', axisLabel:{color:'#fff'}},
-      series:[{data:produtos.map(p=>p.receita), type:'line', smooth:true,
-        itemStyle:{color:'#1abc9c'}, areaStyle:{color:'rgba(26,188,156,0.4)'}}]
-    });
-
-    // Receita por Região
-    let regioes={}; produtos.forEach(p=>{ regioes[p.regiao]=(regioes[p.regiao]||0)+p.receita; });
-    let chartRegiao=echarts.init(document.getElementById('chartRegiao'));
-    chartRegiao.setOption({
-      title:{text:"🌍 Receita por Região", textStyle:{color:'#d4af37', fontSize:20}},
-      xAxis:{type:'category', data:Object.keys(regioes), axisLabel:{color:'#fff'}},
-      yAxis:{type:'value', axisLabel:{color:'#fff'}},
-      series:[{data:Object.values(regioes), type:'bar',
-        itemStyle:{color:'#e74c3c', shadowColor:'#000', shadowBlur:10, borderRadius:6},
-        label:{show:true, color:'#fff', fontWeight:'bold'}
-      }]
-    });
-  }
+  // Formas de Pagamento
+  let formas={};
+  clientes.forEach(c=>{ formas[c.pagamento]=(formas[c.pagamento]||0)+c.valor; });
+  let chartPagamentos=echarts.init(document.getElementById('chartPagamentos'));
+  chartPagamentos.setOption({
+    title:{text:"💳 Formas de Pagamento", textStyle:{color:'#d4af37'}},
+    tooltip:{trigger:'item'},
+    legend:{textStyle:{color:'#fff'}},
+    series:[{type:'pie', radius:['40%','70%'],
+      data:Object.keys(formas).map(f=>({name:f,value:formas[f]})),
+      itemStyle:{shadowBlur:15, shadowColor:'#000'},
+      label:{color:'#fff'}
+    }]
+  });
+}
 </script>
 
 </body>
