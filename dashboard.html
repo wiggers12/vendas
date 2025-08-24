@@ -12,15 +12,7 @@
   <style>
     body { margin:0; font-family:'Poppins', sans-serif; background:#0d0d0d; color:white; }
     header { background:linear-gradient(90deg,#8e44ad,#b8860b); padding:15px; font-size:22px; font-weight:700; text-align:center; }
-    h2 { color:#d4af37; margin:20px 0; text-align:center; }
-    .chart-card {
-      background:#1a1a1a;
-      border-radius:12px;
-      padding:15px;
-      margin:20px auto;
-      box-shadow:0 4px 20px rgba(0,0,0,0.6);
-      max-width:1200px;
-    }
+    .chart-card { background:#1a1a1a; border-radius:12px; padding:15px; margin:20px auto; box-shadow:0 4px 20px rgba(0,0,0,0.6); max-width:1200px; }
     .chart { width:100%; height:400px; }
   </style>
 </head>
@@ -37,70 +29,82 @@
 <script>
 let dados = JSON.parse(localStorage.getItem("dashBusiness")) || {produtos:[], vendas:[], financeiro:{caixa:0, entradas:0, saidas:0, saldo:0}};
 
-// 🔹 Gráfico Vendas por Produto
+// ---------- Vendas por Produto ----------
 let vendas=dados.vendas;
 let produtosVendidos={};
 vendas.forEach(v=>{ produtosVendidos[v.produto]=(produtosVendidos[v.produto]||0)+v.valor; });
 
-let chartVendas=echarts.init(document.getElementById('chartVendas'));
-chartVendas.setOption({
+echarts.init(document.getElementById('chartVendas')).setOption({
   title:{text:"🛒 Vendas por Produto/Serviço", textStyle:{color:'#d4af37'}},
   xAxis:{type:'category', data:Object.keys(produtosVendidos), axisLabel:{color:'#fff'}},
   yAxis:{type:'value', axisLabel:{color:'#fff'}},
-  series:[{data:Object.values(produtosVendidos), type:'bar',
-    itemStyle:{color:'#8e44ad', shadowBlur:10, shadowColor:'#000'},
-    label:{show:true, color:'#fff'}
-  }]
+  series:[{data:Object.values(produtosVendidos), type:'bar', itemStyle:{color:'#8e44ad'}, label:{show:true,color:'#fff'}}]
 });
 
-// 🔹 Estoque Atual
+// ---------- Estoque Atual ----------
 let chartEstoque=echarts.init(document.getElementById('chartEstoque'));
-chartEstoque.setOption({
-  title:{text:"📦 Estoque Atual", textStyle:{color:'#d4af37'}},
-  xAxis:{type:'category', data:dados.produtos.map(p=>p.nome), axisLabel:{color:'#fff'}},
-  yAxis:{type:'value', axisLabel:{color:'#fff'}},
-  series:[{data:dados.produtos.map(p=>p.qtd||0), type:'bar', itemStyle:{color:'#1abc9c'}, label:{show:true, color:'#fff'}}]
-});
+if(dados.produtos.length){
+  chartEstoque.setOption({
+    title:{text:"📦 Estoque Atual", textStyle:{color:'#d4af37'}},
+    xAxis:{type:'category', data:dados.produtos.map(p=>p.nome), axisLabel:{color:'#fff'}},
+    yAxis:{type:'value', axisLabel:{color:'#fff'}},
+    series:[{data:dados.produtos.map(p=>p.qtd ?? 0), type:'bar', itemStyle:{color:'#1abc9c'}, label:{show:true, color:'#fff'}}]
+  });
+} else {
+  chartEstoque.setOption({title:{text:"📦 Estoque Atual (sem dados)", textStyle:{color:'#d4af37'}}});
+}
 
-// 🔹 Financeiro (Entradas x Saídas)
+// ---------- Financeiro ----------
+let fin=dados.financeiro;
 let chartFinanceiro=echarts.init(document.getElementById('chartFinanceiro'));
-chartFinanceiro.setOption({
-  title:{text:"💰 Entradas x Saídas", textStyle:{color:'#d4af37'}},
-  series:[{type:'pie', radius:['40%','70%'],
-    data:[
-      {name:"Entradas",value:dados.financeiro.entradas},
-      {name:"Saídas",value:dados.financeiro.saidas}
-    ],
-    itemStyle:{shadowBlur:15, shadowColor:'#000'},
-    label:{color:'#fff'}
-  }]
-});
+if(fin.entradas || fin.saidas){
+  chartFinanceiro.setOption({
+    title:{text:"💰 Entradas x Saídas", textStyle:{color:'#d4af37'}},
+    series:[{type:'pie', radius:['40%','70%'],
+      data:[
+        {name:"Entradas",value:fin.entradas},
+        {name:"Saídas",value:fin.saidas}
+      ],
+      itemStyle:{shadowBlur:15, shadowColor:'#000'},
+      label:{color:'#fff'}
+    }]
+  });
+} else {
+  chartFinanceiro.setOption({title:{text:"💰 Entradas x Saídas (sem dados)", textStyle:{color:'#d4af37'}}});
+}
 
-// 🔹 Formas de Pagamento
+// ---------- Formas de Pagamento ----------
 let formas={};
 vendas.forEach(v=>{ formas[v.pagamento]=(formas[v.pagamento]||0)+v.valor; });
 let chartPagamentos=echarts.init(document.getElementById('chartPagamentos'));
-chartPagamentos.setOption({
-  title:{text:"💳 Formas de Pagamento", textStyle:{color:'#d4af37'}},
-  series:[{type:'pie', radius:['40%','70%'],
-    data:Object.keys(formas).map(f=>({name:f,value:formas[f]})),
-    itemStyle:{shadowBlur:15, shadowColor:'#000'},
-    label:{color:'#fff'}
-  }]
-});
+if(Object.keys(formas).length){
+  chartPagamentos.setOption({
+    title:{text:"💳 Formas de Pagamento", textStyle:{color:'#d4af37'}},
+    series:[{type:'pie', radius:['40%','70%'],
+      data:Object.keys(formas).map(f=>({name:f,value:formas[f]})),
+      itemStyle:{shadowBlur:15, shadowColor:'#000'},
+      label:{color:'#fff'}
+    }]
+  });
+} else {
+  chartPagamentos.setOption({title:{text:"💳 Formas de Pagamento (sem dados)", textStyle:{color:'#d4af37'}}});
+}
 
-// 🔹 Receita no Tempo
+// ---------- Receita no Tempo ----------
 let porData={};
 vendas.forEach(v=>{ porData[v.data]=(porData[v.data]||0)+v.valor; });
 let chartLinha=echarts.init(document.getElementById('chartLinha'));
-chartLinha.setOption({
-  title:{text:"📈 Receita ao Longo do Tempo", textStyle:{color:'#d4af37'}},
-  xAxis:{type:'category', data:Object.keys(porData), axisLabel:{color:'#fff'}},
-  yAxis:{type:'value', axisLabel:{color:'#fff'}},
-  series:[{data:Object.values(porData), type:'line', smooth:true,
-    itemStyle:{color:'#e74c3c'}, areaStyle:{color:'rgba(231,76,60,0.4)'}
-  }]
-});
+if(Object.keys(porData).length){
+  chartLinha.setOption({
+    title:{text:"📈 Receita ao Longo do Tempo", textStyle:{color:'#d4af37'}},
+    xAxis:{type:'category', data:Object.keys(porData), axisLabel:{color:'#fff'}},
+    yAxis:{type:'value', axisLabel:{color:'#fff'}},
+    series:[{data:Object.values(porData), type:'line', smooth:true,
+      itemStyle:{color:'#e74c3c'}, areaStyle:{color:'rgba(231,76,60,0.4)'}}]
+  });
+} else {
+  chartLinha.setOption({title:{text:"📈 Receita ao Longo do Tempo (sem dados)", textStyle:{color:'#d4af37'}}});
+}
 </script>
 
 </body>
