@@ -5,9 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DashControl Business - Dashboard</title>
 
-  <!-- ECharts principal e extensão 3D (WebGL) -->
+  <!-- ECharts -->
   <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/echarts-gl/dist/echarts-gl.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 
   <style>
@@ -27,211 +26,85 @@
 <div class="chart-card"><div id="chartPagamentos" class="chart"></div></div>
 <div class="chart-card"><div id="chartLinha" class="chart"></div></div>
 
-<script>
-// Acessa a estrutura de dados do localStorage
-let dados = JSON.parse(localStorage.getItem("dashBusiness")) || {vendas:[], estoque:[], financeiro:[]};
+<script type="module">
+  import { db } from "./firebase.js";
+  import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-// Função para renderizar gráficos e redimensioná-los
-function renderChart(elementId, option) {
-  const chart = echarts.init(document.getElementById(elementId));
-  chart.setOption(option);
-  window.addEventListener('resize', () => chart.resize());
-}
-
-// ---------- Gráfico 3D de Vendas por Produto ----------
-let vendas = dados.vendas;
-let produtosVendidos = {};
-vendas.forEach(v => { produtosVendidos[v.produto] = (produtosVendidos[v.produto] || 0) + v.valor; });
-
-// Prepara os dados para o gráfico 3D
-let vendasData3D = Object.keys(produtosVendidos).map(key => {
-    return [key, produtosVendidos[key], 0]; // Adiciona um valor 'z' para a profundidade
-});
-
-renderChart('chartVendas', {
-  title:{text:"🛒 Vendas por Produto/Serviço", textStyle:{color:'#d4af37'}},
-  tooltip: {},
-  visualMap: {
-      type: 'continuous',
-      dimension: 1, // Mapeia a cor pelo valor da venda
-      min: 0,
-      max: Math.max(...Object.values(produtosVendidos)),
-      text: ['Alto', 'Baixo'],
-      calculable: true,
-      inRange: {
-          color: ['#1abc9c', '#8e44ad'] // Gradiente de cores
-      }
-  },
-  xAxis3D:{type:'category', name:'Produto', data:Object.keys(produtosVendidos), axisLabel:{color:'#fff'}},
-  yAxis3D:{type:'value', name:'Valor', axisLabel:{color:'#fff'}},
-  zAxis3D:{type:'value', name:'Volume', axisLabel:{color:'#fff'}},
-  grid3D: {
-      boxWidth: 200,
-      boxDepth: 80,
-      light: {
-          main: { intensity: 1.2 },
-          ambient: { intensity: 0.3 }
-      }
-  },
-  series:[{
-    name: 'Vendas',
-    type: 'bar3D',
-    data: vendasData3D,
-    shading: 'realistic',
-    label: { show: false }
-  }]
-});
-
-// ---------- Gráfico 3D de Estoque Atual ----------
-let chartEstoque = echarts.init(document.getElementById('chartEstoque'));
-if(dados.estoque.length){
-    let estoqueData3D = dados.estoque.map(p => {
-      return [p.nome, p.quantidade ?? 0, 0];
-    });
-
-    renderChart('chartEstoque', {
-      title:{text:"📦 Estoque Atual", textStyle:{color:'#d4af37'}},
-      tooltip: {},
-      visualMap: {
-          type: 'continuous',
-          dimension: 1,
-          min: 0,
-          max: Math.max(...dados.estoque.map(p => p.quantidade ?? 0)),
-          text: ['Alto', 'Baixo'],
-          calculable: true,
-          inRange: {
-              color: ['#3498db', '#f1c40f']
-          }
-      },
-      xAxis3D:{type:'category', name:'Produto', data:dados.estoque.map(p => p.nome), axisLabel:{color:'#fff'}},
-      yAxis3D:{type:'value', name:'Quantidade', axisLabel:{color:'#fff'}},
-      zAxis3D:{type:'value', name:'Volume', axisLabel:{color:'#fff'}},
-      grid3D: {
-          boxWidth: 200,
-          boxDepth: 80,
-          light: {
-              main: { intensity: 1.2 },
-              ambient: { intensity: 0.3 }
-          }
-      },
-      series:[{
-        name: 'Estoque',
-        type: 'bar3D',
-        data: estoqueData3D,
-        shading: 'realistic',
-        label: { show: false }
-      }]
-    });
-} else {
-  chartEstoque.setOption({title:{text:"📦 Estoque Atual (sem dados)", textStyle:{color:'#d4af37'}}});
-}
-
-// ---------- Gráfico Financeiro (Entradas x Saídas) ----------
-let entradas = dados.financeiro.reduce((s, f) => s + (f.entrada || 0), 0);
-let saidas = dados.financeiro.reduce((s, f) => s + (f.saida || 0), 0);
-
-let chartFinanceiro = echarts.init(document.getElementById('chartFinanceiro'));
-if(entradas || saidas){
-  chartFinanceiro.setOption({
-    title:{text:"💰 Entradas x Saídas", textStyle:{color:'#d4af37'}},
-    xAxis: { data: ['Entradas', 'Saídas'], axisLabel:{color:'#fff'}},
-    yAxis: { axisLabel:{color:'#fff'}},
-    series:[{
-      type: 'bar',
-      data: [
-        {value: entradas, itemStyle: {color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{offset: 0, color: '#2ecc71'}, {offset: 1, color: '#27ae60'}])}},
-        {value: saidas, itemStyle: {color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{offset: 0, color: '#e74c3c'}, {offset: 1, color: '#c0392b'}])}}
-      ],
-      itemStyle:{shadowBlur:15, shadowColor:'rgba(0,0,0,0.5)'},
-      label:{show:true, color:'#fff'}
-    }]
-  });
-} else {
-  chartFinanceiro.setOption({title:{text:"💰 Entradas x Saídas (sem dados)", textStyle:{color:'#d4af37'}}});
-}
-
-// ---------- Gráfico de Formas de Pagamento ----------
-let formas = {};
-vendas.forEach(v => { formas[v.pagamento] = (formas[v.pagamento] || 0) + v.valor; });
-let formasData = Object.keys(formas).map(f => ({name: f, value: formas[f]}));
-
-let chartPagamentos = echarts.init(document.getElementById('chartPagamentos'));
-if(formasData.length){
-  chartPagamentos.setOption({
-    title:{text:"💳 Formas de Pagamento", textStyle:{color:'#d4af37'}},
-    tooltip: {trigger: 'item'},
-    series:[{
-      type: 'pie',
-      radius: ['40%', '70%'],
-      data: formasData,
-      emphasis: {
-          itemStyle: {
-              shadowBlur: 10,
-              shadowOffsetX: 0,
-              shadowColor: 'rgba(0, 0, 0, 0.5)'
-          }
-      },
-      label: {
-          show: true,
-          position: 'outside',
-          formatter: '{b}: {d}%',
-          color: '#fff'
-      },
-      labelLine: {
-          show: true,
-          lineStyle: {
-              color: '#d4af37'
-          }
-      }
-    }]
-  });
-} else {
-  chartPagamentos.setOption({title:{text:"💳 Formas de Pagamento (sem dados)", textStyle:{color:'#d4af37'}}});
-}
-
-// ---------- Gráfico de Linha (Receita no Tempo) ----------
-let porData = {};
-vendas.forEach(v => {
-  if (!porData[v.data]) {
-    porData[v.data] = 0;
+  function renderChart(elementId, option) {
+    const chart = echarts.init(document.getElementById(elementId));
+    chart.setOption(option);
+    window.addEventListener("resize", () => chart.resize());
   }
-  porData[v.data] += v.valor;
-});
-let sortedDates = Object.keys(porData).sort();
-let revenueData = sortedDates.map(date => porData[date]);
 
-let chartLinha = echarts.init(document.getElementById('chartLinha'));
-if(sortedDates.length){
-  chartLinha.setOption({
-    title:{text:"📈 Receita ao Longo do Tempo", textStyle:{color:'#d4af37'}},
-    tooltip:{trigger:'axis', axisPointer:{type:'shadow'}},
-    xAxis:{type:'category', data:sortedDates, axisLabel:{color:'#fff'}},
-    yAxis:{type:'value', axisLabel:{color:'#fff'}},
-    series:[{
-      data: revenueData,
-      type: 'line',
-      smooth: true,
-      symbolSize: 10,
-      itemStyle:{
-        color: '#d4af37'
-      },
-      lineStyle: {
-        width: 4
-      },
-      areaStyle: {
-        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
-          offset: 0,
-          color: 'rgba(212, 175, 55, 0.8)'
-        }, {
-          offset: 1,
-          color: 'rgba(212, 175, 55, 0.1)'
-        }])
-      }
-    }]
-  });
-} else {
-  chartLinha.setOption({title:{text:"📈 Receita ao Longo do Tempo (sem dados)", textStyle:{color:'#d4af37'}}});
-}
+  async function carregarDados() {
+    // 🔹 Vendas
+    const vendasSnap = await getDocs(collection(db, "vendas"));
+    let vendas = [];
+    vendasSnap.forEach(doc => vendas.push(doc.data()));
+
+    // 🔹 Estoque
+    const estoqueSnap = await getDocs(collection(db, "estoque"));
+    let estoque = [];
+    estoqueSnap.forEach(doc => estoque.push(doc.data()));
+
+    // 🔹 Financeiro
+    const finSnap = await getDocs(collection(db, "financeiro"));
+    let financeiro = [];
+    finSnap.forEach(doc => financeiro.push(doc.data()));
+
+    montarGraficos(vendas, estoque, financeiro);
+  }
+
+  function montarGraficos(vendas, estoque, financeiro) {
+    // Vendas por Produto
+    let vendasPorProduto = {};
+    vendas.forEach(v => vendasPorProduto[v.prodId] = (vendasPorProduto[v.prodId] || 0) + v.valor);
+
+    renderChart("chartVendas", {
+      title:{text:"🛒 Vendas por Produto", textStyle:{color:'#d4af37'}},
+      xAxis:{type:"category", data:Object.keys(vendasPorProduto), axisLabel:{color:'#fff'}},
+      yAxis:{type:"value", axisLabel:{color:'#fff'}},
+      series:[{type:"bar", data:Object.values(vendasPorProduto), itemStyle:{color:"#8e44ad"}, label:{show:true, color:"#fff"}}]
+    });
+
+    // Estoque Atual
+    renderChart("chartEstoque", {
+      title:{text:"📦 Estoque Atual", textStyle:{color:'#d4af37'}},
+      xAxis:{type:"category", data:estoque.map(e=>e.nome), axisLabel:{color:'#fff'}},
+      yAxis:{type:"value", axisLabel:{color:'#fff'}},
+      series:[{type:"bar", data:estoque.map(e=>e.quantidade ?? 0), itemStyle:{color:"#1abc9c"}, label:{show:true, color:"#fff"}}]
+    });
+
+    // Financeiro (Entradas x Saídas)
+    let entradas = financeiro.reduce((s,f)=>s+(f.entrada||0),0);
+    let saidas = financeiro.reduce((s,f)=>s+(f.saida||0),0);
+    renderChart("chartFinanceiro", {
+      title:{text:"💰 Entradas x Saídas", textStyle:{color:'#d4af37'}},
+      xAxis:{type:"category", data:["Entradas","Saídas"], axisLabel:{color:'#fff'}},
+      yAxis:{type:"value", axisLabel:{color:'#fff'}},
+      series:[{type:"bar", data:[entradas,saidas], itemStyle:{color:"#b8860b"}, label:{show:true, color:"#fff"}}]
+    });
+
+    // Formas de Pagamento
+    let formas = {};
+    vendas.forEach(v => formas[v.pagamento]=(formas[v.pagamento]||0)+v.valor);
+    renderChart("chartPagamentos", {
+      title:{text:"💳 Formas de Pagamento", textStyle:{color:'#d4af37'}},
+      series:[{type:"pie", radius:["40%","70%"], data:Object.keys(formas).map(f=>({name:f,value:formas[f]})), label:{color:"#fff"}}]
+    });
+
+    // Receita ao Longo do Tempo
+    let porData = {};
+    vendas.forEach(v => { porData[v.data]=(porData[v.data]||0)+v.valor; });
+    renderChart("chartLinha", {
+      title:{text:"📈 Receita ao Longo do Tempo", textStyle:{color:'#d4af37'}},
+      xAxis:{type:"category", data:Object.keys(porData), axisLabel:{color:'#fff'}},
+      yAxis:{type:"value", axisLabel:{color:'#fff'}},
+      series:[{type:"line", data:Object.values(porData), smooth:true, itemStyle:{color:"#d4af37"}}]
+    });
+  }
+
+  carregarDados();
 </script>
 
 </body>
