@@ -3,13 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DashControl Universal</title>
+  <title>DashControl Universal PRO</title>
 
   <!-- ECharts -->
   <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
 
   <!-- Fonte Premium -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <!-- Manifest PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0d0d0d">
 
   <style>
     body { margin:0; font-family:'Poppins', sans-serif; background:#0d0d0d; color:white; text-align:center; }
@@ -19,29 +23,21 @@
     nav button:hover { background:#b8860b; }
     .page { display:none; padding:20px; max-width:1200px; margin:auto; }
     h2 { color:#d4af37; margin-bottom:20px; font-weight:700; font-size:22px; }
-
-    /* Splash */
-    .splash { position:fixed; top:0; left:0; width:100%; height:100%; 
-      background:linear-gradient(135deg,#0d0d0d,#8e44ad,#b8860b); 
-      display:flex; align-items:center; justify-content:center; flex-direction:column; 
+    .splash { position:fixed; top:0; left:0; width:100%; height:100%;
+      background:linear-gradient(135deg,#0d0d0d,#8e44ad,#b8860b);
+      display:flex; align-items:center; justify-content:center; flex-direction:column;
       color:#fff; font-size:36px; font-weight:bold; z-index:9999; text-align:center; animation:fadeIn 1.5s; }
     .splash small { color:#ddd; margin-top:10px; font-size:18px; }
     @keyframes fadeIn { from{opacity:0} to{opacity:1} }
-
-    /* Escolha do Negócio */
     .cards { display:flex; justify-content:center; gap:20px; flex-wrap:wrap; }
     .card-opt { background:#1a1a1a; border-radius:12px; padding:30px; width:250px; cursor:pointer; box-shadow:0 4px 20px rgba(0,0,0,0.6); transition:0.3s; }
     .card-opt:hover { transform:scale(1.05); background:#2c2c2c; }
     .card-opt h3 { margin:10px 0; color:#d4af37; }
-
-    /* Formulário Admin */
     form { max-width:600px; margin:auto; text-align:left; }
     label { display:block; margin:10px 0 5px; font-weight:600; color:#d4af37; }
     input, select { padding:10px; border-radius:6px; border:none; width:100%; background:#2c2c2c; color:white; font-size:14px; }
     button.action { background:#8e44ad; padding:12px; margin:10px 5px; border:none; border-radius:8px; color:white; font-weight:bold; cursor:pointer; }
     button.action:hover { background:#b8860b; }
-
-    /* Dashboard */
     .chart-card { background:#1a1a1a; border-radius:12px; padding:15px; margin:20px auto; box-shadow:0 4px 20px rgba(0,0,0,0.6); }
     .chart { width:100%; height:400px; }
   </style>
@@ -50,31 +46,24 @@
 
   <!-- Splash -->
   <div id="splash" class="splash">
-    🚀 DashControl Universal <br>
+    🚀 DashControl Universal PRO <br>
     <small>O BI que se adapta ao seu negócio</small>
   </div>
 
-  <!-- Cabeçalho -->
-  <header>📊 DashControl Universal</header>
+  <header>📊 DashControl Universal PRO</header>
   <nav>
     <button onclick="showPage('home')">🏠 Início</button>
     <button onclick="showPage('admin')">⚙️ Inserir Dados</button>
     <button onclick="showPage('dashboard')">📈 Dashboard</button>
   </nav>
 
-  <!-- Escolha do Negócio -->
+  <!-- Home -->
   <div id="home" class="page">
     <h2>Escolha seu tipo de negócio</h2>
     <div class="cards">
-      <div class="card-opt" onclick="selecionarNegocio('delivery')">
-        🚚 <h3>Delivery</h3>
-      </div>
-      <div class="card-opt" onclick="selecionarNegocio('salao')">
-        💇‍♀️ <h3>Salão de Beleza</h3>
-      </div>
-      <div class="card-opt" onclick="selecionarNegocio('ecommerce')">
-        🛒 <h3>E-commerce</h3>
-      </div>
+      <div class="card-opt" onclick="selecionarNegocio('delivery')">🚚 <h3>Delivery</h3></div>
+      <div class="card-opt" onclick="selecionarNegocio('salao')">💇‍♀️ <h3>Salão de Beleza</h3></div>
+      <div class="card-opt" onclick="selecionarNegocio('ecommerce')">🛒 <h3>E-commerce</h3></div>
     </div>
   </div>
 
@@ -83,7 +72,8 @@
     <h2 id="tituloAdmin">Inserção de Dados</h2>
     <form id="formDados"></form>
     <button type="button" class="action" onclick="adicionarProduto()">➕ Adicionar</button>
-    <button type="button" class="action" onclick="limparDados()">🗑️ Limpar Dados</button>
+    <button type="button" class="action" onclick="limparDados()">🗑️ Limpar</button>
+    <button type="button" class="action" onclick="exportarCSV()">⬇ Exportar CSV</button>
     <p id="msgAdmin"></p>
   </div>
 
@@ -106,7 +96,6 @@
     if(id==='dashboard') atualizarDashboard();
   }
 
-  // Dados e Negócios
   let negocioSelecionado=null;
   let dados=[];
 
@@ -127,8 +116,7 @@
         <label>Estoque:</label><input type="number" id="estoque">
         <label>Vendas:</label><input type="number" id="vendas">
         <label>Região:</label><input type="text" id="regiao">
-        <label>Entregador:</label><input type="text" id="entregador">
-      `;
+        <label>Entregador:</label><input type="text" id="entregador">`;
       document.getElementById('tituloAdmin').innerText="Inserção - Delivery";
       document.getElementById('tituloDashboard').innerText="Dashboard - Delivery";
     }
@@ -138,10 +126,9 @@
         <label>Serviço:</label><input type="text" id="servico">
         <label>Valor:</label><input type="number" id="valor">
         <label>Profissional:</label><input type="text" id="profissional">
-        <label>Data:</label><input type="date" id="data">
-      `;
-      document.getElementById('tituloAdmin').innerText="Inserção - Salão de Beleza";
-      document.getElementById('tituloDashboard').innerText="Dashboard - Salão de Beleza";
+        <label>Data:</label><input type="date" id="data">`;
+      document.getElementById('tituloAdmin').innerText="Inserção - Salão";
+      document.getElementById('tituloDashboard').innerText="Dashboard - Salão";
     }
     if(tipo==='ecommerce'){
       form.innerHTML=`
@@ -149,8 +136,7 @@
         <label>Categoria:</label><input type="text" id="categoria">
         <label>Vendas:</label><input type="number" id="vendas">
         <label>Carrinhos Abandonados:</label><input type="number" id="carrinhos">
-        <label>Ticket Médio (R$):</label><input type="number" id="ticket">
-      `;
+        <label>Ticket Médio (R$):</label><input type="number" id="ticket">`;
       document.getElementById('tituloAdmin').innerText="Inserção - E-commerce";
       document.getElementById('tituloDashboard').innerText="Dashboard - E-commerce";
     }
@@ -158,102 +144,53 @@
 
   function adicionarProduto(){
     if(negocioSelecionado==='delivery'){
-      dados.push({
-        produto:document.getElementById('produto').value,
-        estoque:+document.getElementById('estoque').value,
-        vendas:+document.getElementById('vendas').value,
-        regiao:document.getElementById('regiao').value,
-        entregador:document.getElementById('entregador').value
-      });
+      dados.push({produto:produto.value, estoque:+estoque.value, vendas:+vendas.value, regiao:regiao.value, entregador:entregador.value});
     }
     if(negocioSelecionado==='salao'){
-      dados.push({
-        cliente:document.getElementById('cliente').value,
-        servico:document.getElementById('servico').value,
-        valor:+document.getElementById('valor').value,
-        profissional:document.getElementById('profissional').value,
-        data:document.getElementById('data').value
-      });
+      dados.push({cliente:cliente.value, servico:servico.value, valor:+valor.value, profissional:profissional.value, data:data.value});
     }
     if(negocioSelecionado==='ecommerce'){
-      dados.push({
-        produto:document.getElementById('produto').value,
-        categoria:document.getElementById('categoria').value,
-        vendas:+document.getElementById('vendas').value,
-        carrinhos:+document.getElementById('carrinhos').value,
-        ticket:+document.getElementById('ticket').value
-      });
+      dados.push({produto:produto.value, categoria:categoria.value, vendas:+vendas.value, carrinhos:+carrinhos.value, ticket:+ticket.value});
     }
     localStorage.setItem("dashUniversal", JSON.stringify({tipo:negocioSelecionado,dados}));
-    document.getElementById('msgAdmin').innerText="✅ Dados adicionados!";
+    msgAdmin.innerText="✅ Dados adicionados!";
   }
 
   function limparDados(){
     dados=[];
     localStorage.setItem("dashUniversal", JSON.stringify({tipo:negocioSelecionado,dados}));
-    document.getElementById('msgAdmin').innerText="🗑️ Dados apagados!";
+    msgAdmin.innerText="🗑️ Dados apagados!";
   }
 
-  // Dashboard Dinâmico
+  function exportarCSV(){
+    if(dados.length===0){ alert("Nenhum dado para exportar!"); return; }
+    let csv=Object.keys(dados[0]).join(",")+"\n";
+    dados.forEach(row=>{ csv+=Object.values(row).join(",")+"\n"; });
+    let blob=new Blob([csv],{type:"text/csv"});
+    let url=URL.createObjectURL(blob);
+    let a=document.createElement("a");
+    a.href=url;
+    a.download="dados_"+negocioSelecionado+".csv";
+    a.click();
+  }
+
   function atualizarDashboard(){
-    if(!negocioSelecionado || dados.length===0){ alert("Nenhum dado cadastrado!"); return; }
+    if(dados.length===0){ alert("Nenhum dado cadastrado!"); return; }
+    // exemplo simples: gráfico 1 sempre barras
+    let chart1=echarts.init(document.getElementById('chart1'));
+    chart1.setOption({
+      title:{text:"📊 Dados", textStyle:{color:'#d4af37'}},
+      xAxis:{type:'category', data:Object.keys(dados[0]), axisLabel:{color:'#fff'}},
+      yAxis:{type:'value', axisLabel:{color:'#fff'}},
+      series:[{data:Object.values(dados[0]).map(v=>typeof v==="number"?v:0), type:'bar', itemStyle:{color:'#8e44ad'}}]
+    });
+  }
+</script>
 
-    // Delivery
-    if(negocioSelecionado==='delivery'){
-      let chart1=echarts.init(document.getElementById('chart1'));
-      chart1.setOption({title:{text:"📦 Vendas por Produto", textStyle:{color:'#d4af37'}},
-        xAxis:{type:'category', data:dados.map(d=>d.produto), axisLabel:{color:'#fff'}},
-        yAxis:{type:'value', axisLabel:{color:'#fff'}},
-        series:[{data:dados.map(d=>d.vendas), type:'bar', itemStyle:{color:'#8e44ad'}, label:{show:true, color:'#fff'}}]});
-
-      let chart2=echarts.init(document.getElementById('chart2'));
-      chart2.setOption({title:{text:"🌍 Vendas por Região", textStyle:{color:'#d4af37'}},
-        series:[{type:'pie', radius:'60%', data:dados.map(d=>({name:d.regiao,value:d.vendas})), label:{color:'#fff'}}]});
-
-      let chart3=echarts.init(document.getElementById('chart3'));
-      chart3.setOption({title:{text:"🚚 Vendas por Entregador", textStyle:{color:'#d4af37'}},
-        xAxis:{type:'category', data:dados.map(d=>d.entregador), axisLabel:{color:'#fff'}},
-        yAxis:{type:'value', axisLabel:{color:'#fff'}},
-        series:[{data:dados.map(d=>d.vendas), type:'bar', itemStyle:{color:'#3498db'}, label:{show:true, color:'#fff'}}]});
-    }
-
-    // Salão
-    if(negocioSelecionado==='salao'){
-      let chart1=echarts.init(document.getElementById('chart1'));
-      chart1.setOption({title:{text:"💇‍♀️ Faturamento por Serviço", textStyle:{color:'#d4af37'}},
-        xAxis:{type:'category', data:dados.map(d=>d.servico), axisLabel:{color:'#fff'}},
-        yAxis:{type:'value', axisLabel:{color:'#fff'}},
-        series:[{data:dados.map(d=>d.valor), type:'bar', itemStyle:{color:'#8e44ad'}, label:{show:true, color:'#fff'}}]});
-
-      let chart2=echarts.init(document.getElementById('chart2'));
-      chart2.setOption({title:{text:"👩‍🔧 Clientes por Profissional", textStyle:{color:'#d4af37'}},
-        series:[{type:'pie', radius:'60%', data:dados.map(d=>({name:d.profissional,value:1})), label:{color:'#fff'}}]});
-
-      let chart3=echarts.init(document.getElementById('chart3'));
-      chart3.setOption({title:{text:"📅 Receita por Data", textStyle:{color:'#d4af37'}},
-        xAxis:{type:'category', data:dados.map(d=>d.data), axisLabel:{color:'#fff'}},
-        yAxis:{type:'value', axisLabel:{color:'#fff'}},
-        series:[{data:dados.map(d=>d.valor), type:'line', smooth:true, itemStyle:{color:'#1abc9c'}, areaStyle:{color:'rgba(26,188,156,0.4)'}}]});
-    }
-
-    // E-commerce
-    if(negocioSelecionado==='ecommerce'){
-      let chart1=echarts.init(document.getElementById('chart1'));
-      chart1.setOption({title:{text:"🛒 Vendas por Produto", textStyle:{color:'#d4af37'}},
-        xAxis:{type:'category', data:dados.map(d=>d.produto), axisLabel:{color:'#fff'}},
-        yAxis:{type:'value', axisLabel:{color:'#fff'}},
-        series:[{data:dados.map(d=>d.vendas), type:'bar', itemStyle:{color:'#8e44ad'}, label:{show:true, color:'#fff'}}]});
-
-      let chart2=echarts.init(document.getElementById('chart2'));
-      chart2.setOption({title:{text:"📊 Receita por Categoria", textStyle:{color:'#d4af37'}},
-        series:[{type:'pie', radius:'60%', data:dados.map(d=>({name:d.categoria,value:d.vendas*d.ticket})), label:{color:'#fff'}}]});
-
-      let chart3=echarts.init(document.getElementById('chart3'));
-      chart3.setOption({title:{text:"❌ Carrinhos Abandonados", textStyle:{color:'#d4af37'}},
-        xAxis:{type:'category', data:dados.map(d=>d.produto), axisLabel:{color:'#fff'}},
-        yAxis:{type:'value', axisLabel:{color:'#fff'}},
-        series:[{data:dados.map(d=>d.carrinhos), type:'bar', itemStyle:{color:'#e74c3c'}, label:{show:true, color:'#fff'}}]});
-    }
+<script>
+  // Registrar Service Worker
+  if("serviceWorker" in navigator){
+    navigator.serviceWorker.register("sw.js");
   }
 </script>
 
