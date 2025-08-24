@@ -3,203 +3,71 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DashControl Premium 3D</title>
-
-  <!-- ECharts -->
-  <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+  <title>DashControl Business</title>
 
   <!-- Fonte Premium -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 
   <style>
-    body { margin:0; font-family:'Poppins', sans-serif; background:#0d0d0d; color:white; text-align:center; }
+    body { margin:0; font-family:'Poppins', sans-serif; background:#0d0d0d; color:white; text-align:center; overflow:hidden; }
     header { background:linear-gradient(90deg,#8e44ad,#b8860b); padding:15px; font-size:24px; font-weight:700; }
-    nav { display:flex; justify-content:center; gap:10px; background:#1e1e1e; padding:10px; flex-wrap:wrap; }
-    nav button { background:#8e44ad; border:none; padding:10px 15px; color:white; border-radius:8px; cursor:pointer; font-weight:600; }
-    nav button:hover { background:#b8860b; }
-    .page { display:none; padding:20px; max-width:1200px; margin:auto; }
-    h2 { color:#d4af37; margin-bottom:20px; font-weight:700; font-size:22px; }
 
     /* Splash */
-    .splash { position:fixed; top:0; left:0; width:100%; height:100%; 
-      background:linear-gradient(135deg,#0d0d0d,#8e44ad,#b8860b); 
-      display:flex; align-items:center; justify-content:center; flex-direction:column; 
-      color:#fff; font-size:42px; font-weight:bold; z-index:9999; text-align:center; animation:fadeIn 1.5s; }
+    .splash {
+      position:fixed; top:0; left:0; width:100%; height:100%;
+      background:linear-gradient(135deg,#0d0d0d,#8e44ad,#b8860b);
+      display:flex; align-items:center; justify-content:center; flex-direction:column;
+      color:#fff; font-size:42px; font-weight:bold; z-index:9999; text-align:center;
+      animation:fadeIn 1.5s;
+    }
     .splash small { color:#ddd; margin-top:10px; font-size:18px; }
     @keyframes fadeIn { from{opacity:0} to{opacity:1} }
 
-    /* Formulário Admin */
-    form { max-width:600px; margin:auto; text-align:left; }
-    label { display:block; margin:10px 0 5px; font-weight:600; color:#d4af37; }
-    input, select { padding:10px; border-radius:6px; border:none; width:100%; background:#2c2c2c; color:white; font-size:14px; }
-    button.action { background:#8e44ad; padding:12px; margin:10px 5px; border:none; border-radius:8px; color:white; font-weight:bold; cursor:pointer; }
-    button.action:hover { background:#b8860b; }
-
-    /* Dashboard */
-    .chart-card { background:#1a1a1a; border-radius:12px; padding:15px; margin:20px auto; box-shadow:0 4px 20px rgba(0,0,0,0.6); }
-    .chart { width:100%; height:400px; }
+    /* Home */
+    .home { display:none; padding:30px; }
+    h1 { color:#d4af37; margin-bottom:30px; }
+    .cards { display:flex; justify-content:center; gap:30px; flex-wrap:wrap; }
+    .card {
+      background:#1a1a1a; border-radius:12px; padding:40px; width:250px; height:180px;
+      cursor:pointer; box-shadow:0 4px 20px rgba(0,0,0,0.6); transition:0.3s;
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+    }
+    .card:hover { transform:scale(1.05); background:#2c2c2c; }
+    .card h3 { margin:15px 0 0; color:#d4af37; font-size:20px; }
+    .icon { font-size:40px; }
   </style>
 </head>
 <body>
 
   <!-- Splash -->
   <div id="splash" class="splash">
-    🚀 DashControl <br>
-    <small>Controle total em suas mãos</small>
+    🚀 DashControl Business <br>
+    <small>O BI que se adapta ao seu negócio</small>
   </div>
 
-  <!-- Cabeçalho -->
-  <header>📊 DashControl Premium 3D</header>
-  <nav>
-    <button onclick="showPage('admin')">⚙️ Inserir Dados</button>
-    <button onclick="showPage('dashboard')">📈 Dashboard</button>
-  </nav>
-
-  <!-- Admin -->
-  <div id="admin" class="page">
-    <h2>Inserção de Dados</h2>
-    <form id="formDados">
-      <label>Produto:</label>
-      <input type="text" id="nomeProduto" required>
-
-      <label>Categoria:</label>
-      <select id="categoriaProduto">
-        <option value="Gás">Gás</option>
-        <option value="Água">Água</option>
-        <option value="Outros">Outros</option>
-      </select>
-
-      <label>Preço unitário (R$):</label>
-      <input type="number" id="precoProduto" required>
-
-      <label>Vendas realizadas:</label>
-      <input type="number" id="vendasProduto" required>
-
-      <label>Estoque disponível:</label>
-      <input type="number" id="estoqueProduto" required>
-
-      <label>Data da venda:</label>
-      <input type="date" id="dataProduto" required>
-
-      <label>Região:</label>
-      <input type="text" id="regiaoProduto" placeholder="Ex: Sul, Norte, Leste, Oeste">
-
-      <button type="button" class="action" onclick="adicionarProduto()">➕ Adicionar Produto</button>
-      <button type="button" class="action" onclick="limparDados()">🗑️ Limpar Dados</button>
-    </form>
-    <p id="msgAdmin"></p>
-  </div>
-
-  <!-- Dashboard -->
-  <div id="dashboard" class="page">
-    <h2>Dashboard Premium 3D</h2>
-    <div class="chart-card"><div id="chartVendas" class="chart"></div></div>
-    <div class="chart-card"><div id="chartCategoria" class="chart"></div></div>
-    <div class="chart-card"><div id="chartReceita" class="chart"></div></div>
-    <div class="chart-card"><div id="chartLinha" class="chart"></div></div>
-    <div class="chart-card"><div id="chartRegiao" class="chart"></div></div>
+  <!-- Home -->
+  <div id="home" class="home">
+    <header>📊 DashControl Business</header>
+    <h1>Bem-vindo!</h1>
+    <p>Escolha uma das opções abaixo:</p>
+    <div class="cards">
+      <div class="card" onclick="location.href='dados.html'">
+        <div class="icon">⚙️</div>
+        <h3>Gerenciar Dados</h3>
+      </div>
+      <div class="card" onclick="location.href='dashboard.html'">
+        <div class="icon">📈</div>
+        <h3>Visualizar Dashboard</h3>
+      </div>
+    </div>
   </div>
 
 <script>
-  // Splash
-  setTimeout(()=>{ document.getElementById('splash').style.display='none'; showPage('admin'); },2000);
-
-  // Navegação
-  function showPage(id){
-    document.querySelectorAll('.page').forEach(p=>p.style.display='none');
-    document.getElementById(id).style.display='block';
-    if(id==='dashboard') atualizarDashboard();
-  }
-
-  // Dados
-  let produtos = JSON.parse(localStorage.getItem("dashProdutos")) || [];
-
-  function adicionarProduto(){
-    let nome=document.getElementById('nomeProduto').value;
-    let categoria=document.getElementById('categoriaProduto').value;
-    let preco=parseFloat(document.getElementById('precoProduto').value)||0;
-    let vendas=parseInt(document.getElementById('vendasProduto').value)||0;
-    let estoque=parseInt(document.getElementById('estoqueProduto').value)||0;
-    let data=document.getElementById('dataProduto').value;
-    let regiao=document.getElementById('regiaoProduto').value||"Não informada";
-
-    if(!nome || !preco || !data) return alert("Preencha todos os campos obrigatórios!");
-
-    produtos.push({nome,categoria,preco,vendas,estoque,receita:preco*vendas,data,regiao});
-    localStorage.setItem("dashProdutos", JSON.stringify(produtos));
-    document.getElementById('msgAdmin').innerText="✅ Produto adicionado!";
-    document.getElementById('formDados').reset();
-  }
-
-  function limparDados(){
-    produtos=[]; localStorage.removeItem("dashProdutos");
-    document.getElementById('msgAdmin').innerText="🗑️ Dados apagados!";
-  }
-
-  // Dashboard
-  function atualizarDashboard(){
-    if(produtos.length===0){ alert("Nenhum dado cadastrado!"); return; }
-
-    // Vendas por Produto (Barras 3D fake com sombras)
-    let chartVendas=echarts.init(document.getElementById('chartVendas'));
-    chartVendas.setOption({
-      title:{text:"📊 Vendas por Produto", textStyle:{color:'#d4af37', fontSize:20}},
-      xAxis:{type:'category', data:produtos.map(p=>p.nome), axisLabel:{color:'#fff'}},
-      yAxis:{type:'value', axisLabel:{color:'#fff'}},
-      series:[{data:produtos.map(p=>p.vendas), type:'bar',
-        itemStyle:{color:'#8e44ad', shadowColor:'#000', shadowBlur:10, borderRadius:6},
-        label:{show:true, color:'#fff', fontWeight:'bold'}
-      }]
-    });
-
-    // Receita por Categoria
-    let categorias={}; produtos.forEach(p=>{ categorias[p.categoria]=(categorias[p.categoria]||0)+p.receita; });
-    let chartCategoria=echarts.init(document.getElementById('chartCategoria'));
-    chartCategoria.setOption({
-      title:{text:"💰 Receita por Categoria", textStyle:{color:'#d4af37', fontSize:20}},
-      xAxis:{type:'category', data:Object.keys(categorias), axisLabel:{color:'#fff'}},
-      yAxis:{type:'value', axisLabel:{color:'#fff'}},
-      series:[{data:Object.values(categorias), type:'bar',
-        itemStyle:{color:'#b8860b', shadowColor:'#000', shadowBlur:10, borderRadius:6},
-        label:{show:true, color:'#fff', fontWeight:'bold'}
-      }]
-    });
-
-    // Receita por Produto (Donut 3D fake)
-    let chartReceita=echarts.init(document.getElementById('chartReceita'));
-    chartReceita.setOption({
-      title:{text:"🍩 Participação na Receita", textStyle:{color:'#d4af37', fontSize:20}},
-      series:[{
-        type:'pie', radius:['40%','70%'],
-        data:produtos.map(p=>({name:p.nome, value:p.receita})),
-        itemStyle:{shadowBlur:15, shadowColor:'#000'},
-        label:{color:'#fff', fontWeight:'bold'}
-      }]
-    });
-
-    // Receita no Tempo (Linha suave)
-    let chartLinha=echarts.init(document.getElementById('chartLinha'));
-    chartLinha.setOption({
-      title:{text:"📈 Receita ao Longo do Tempo", textStyle:{color:'#d4af37', fontSize:20}},
-      xAxis:{type:'category', data:produtos.map(p=>p.data), axisLabel:{color:'#fff'}},
-      yAxis:{type:'value', axisLabel:{color:'#fff'}},
-      series:[{data:produtos.map(p=>p.receita), type:'line', smooth:true,
-        itemStyle:{color:'#1abc9c'}, areaStyle:{color:'rgba(26,188,156,0.4)'}}]
-    });
-
-    // Receita por Região
-    let regioes={}; produtos.forEach(p=>{ regioes[p.regiao]=(regioes[p.regiao]||0)+p.receita; });
-    let chartRegiao=echarts.init(document.getElementById('chartRegiao'));
-    chartRegiao.setOption({
-      title:{text:"🌍 Receita por Região", textStyle:{color:'#d4af37', fontSize:20}},
-      xAxis:{type:'category', data:Object.keys(regioes), axisLabel:{color:'#fff'}},
-      yAxis:{type:'value', axisLabel:{color:'#fff'}},
-      series:[{data:Object.values(regioes), type:'bar',
-        itemStyle:{color:'#e74c3c', shadowColor:'#000', shadowBlur:10, borderRadius:6},
-        label:{show:true, color:'#fff', fontWeight:'bold'}
-      }]
-    });
-  }
+  // Splash temporário
+  setTimeout(()=>{
+    document.getElementById('splash').style.display='none';
+    document.getElementById('home').style.display='block';
+  },2500);
 </script>
 
 </body>
