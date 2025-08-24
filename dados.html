@@ -17,231 +17,180 @@
     button:hover { background:#b8860b; transform:scale(1.05); }
     .row { display:flex; flex-wrap:wrap; gap:15px; }
     .col { flex:1; min-width:200px; }
+    .hidden { display:none; }
   </style>
 </head>
 <body>
 
 <header>⚙️ DashControl Business - Inserção de Dados</header>
 
-<!-- Seleção do tipo de negócio -->
-<section>
-  <h2>Escolha o tipo de negócio</h2>
-  <select id="tipoNegocio" onchange="atualizarNegocio()">
-    <option value="">-- Selecione --</option>
-    <option value="delivery">🚚 Delivery</option>
-    <option value="salao">💇‍♀️ Salão</option>
-    <option value="ecommerce">🛒 E-commerce</option>
-    <option value="academia">🥋 Academia</option>
-  </select>
-</section>
+<!-- Sessão Vendas -->
+<section id="secVenda">
+  <h2>🛒 Registrar Venda</h2>
+  <label>Produto/Serviço:</label>
+  <select id="vendaProduto"></select>
 
-<!-- Sessão Cliente -->
-<section id="secCliente" style="display:none;">
-  <h2>👤 Cliente</h2>
-  <label>Nome do Cliente:</label>
-  <input type="text" id="clienteNome">
-  <label>Serviço/Produto:</label>
-  <input type="text" id="clienteServico" placeholder="Ex: Unha, Refrigerante, Jiu-Jitsu">
   <label>Valor (R$):</label>
-  <input type="number" id="clienteValor">
+  <input type="number" id="vendaValor" readonly>
+
   <label>Forma de Pagamento:</label>
-  <select id="clientePagamento">
-    <option value="Dinheiro">💵 Dinheiro</option>
+  <select id="vendaPagamento" onchange="toggleTroco()">
     <option value="Pix">⚡ Pix</option>
     <option value="Débito">💳 Débito</option>
     <option value="Crédito">💳 Crédito</option>
+    <option value="Dinheiro">💵 Dinheiro</option>
   </select>
+
+  <div id="trocoArea" class="hidden">
+    <label>Valor Recebido (R$):</label>
+    <input type="number" id="valorRecebido">
+  </div>
+
+  <label>Data da Venda:</label>
+  <input type="date" id="vendaData" value="" />
+
   <div class="actions">
-    <button onclick="registrarCliente()">💾 Registrar Cliente</button>
+    <button onclick="registrarVenda()">💾 Registrar Venda</button>
   </div>
 </section>
 
-<!-- Sessão Estoque -->
-<section id="secEstoque" style="display:none;">
-  <h2>📦 Estoque</h2>
-  <div class="row">
-    <div class="col">
-      <label>Produto/Serviço:</label>
-      <input type="text" id="estoqueProduto">
-    </div>
-    <div class="col">
-      <label>Quantidade:</label>
-      <input type="number" id="estoqueQtd">
-    </div>
-    <div class="col">
-      <label>Preço Unitário (R$):</label>
-      <input type="number" id="estoquePreco">
-    </div>
-  </div>
+<!-- Sessão Estoque/Serviços -->
+<section>
+  <h2>📦 Cadastro de Produtos/Serviços</h2>
+  <label>Nome:</label>
+  <input type="text" id="estoqueNome">
+
+  <label>Valor Unitário (R$):</label>
+  <input type="number" id="estoqueValor">
+
+  <label>Quantidade (deixe vazio se for serviço):</label>
+  <input type="number" id="estoqueQtd">
+
   <div class="actions">
     <button onclick="adicionarEstoque()">➕ Adicionar</button>
-    <button onclick="editarEstoque()">✏️ Editar</button>
-    <button onclick="removerEstoque()">🗑️ Remover</button>
   </div>
 </section>
 
 <!-- Sessão Financeiro -->
-<section id="secFinanceiro" style="display:none;">
+<section>
   <h2>💰 Financeiro</h2>
-  <label>Caixa Inicial do Dia (R$):</label>
+  <label>Caixa Inicial (R$):</label>
   <input type="number" id="caixaInicial">
+
   <div class="actions">
-    <button onclick="atualizarCaixa()">💾 Atualizar Caixa</button>
+    <button onclick="definirCaixa()">💾 Definir Caixa Inicial</button>
   </div>
+
   <div class="row">
     <div class="col"><strong>Entradas:</strong> <span id="finEntradas">0</span></div>
     <div class="col"><strong>Saídas:</strong> <span id="finSaidas">0</span></div>
-    <div class="col"><strong>Saldo Atual:</strong> <span id="finSaldo">0</span></div>
-  </div>
-</section>
-
-<!-- Botões gerais -->
-<section id="secAcoes" style="display:none;">
-  <h2>⚡ Ações</h2>
-  <div class="actions">
-    <button onclick="exportarCSV()">⬇ Exportar CSV</button>
-    <button onclick="limparDados()">🗑️ Limpar Todos os Dados</button>
+    <div class="col"><strong>Saldo:</strong> <span id="finSaldo">0</span></div>
   </div>
 </section>
 
 <script>
-let dados = JSON.parse(localStorage.getItem("dashBusiness")) || {delivery:[], salao:[], ecommerce:[], academia:[]};
-let negocioAtual="";
+let dados = JSON.parse(localStorage.getItem("dashBusiness")) || {vendas:[], estoque:[], financeiro:[]};
 
-// Atualizar tipo de negócio
-function atualizarNegocio(){
-  negocioAtual=document.getElementById("tipoNegocio").value;
-  if(negocioAtual){
-    document.getElementById("secCliente").style.display="block";
-    document.getElementById("secEstoque").style.display="block";
-    document.getElementById("secFinanceiro").style.display="block";
-    document.getElementById("secAcoes").style.display="block";
-  }
+// Preenche select de produtos
+function atualizarSelect(){
+  let sel=document.getElementById("vendaProduto");
+  sel.innerHTML="";
+  dados.estoque.forEach((p,i)=>{
+    let opt=document.createElement("option");
+    opt.value=i;
+    opt.text=`${p.nome} - R$${p.valor}`;
+    sel.appendChild(opt);
+  });
+  if(dados.estoque.length>0) atualizarValorVenda();
 }
 
-// Registrar Cliente (gera venda + financeiro)
-function registrarCliente(){
-  let nome=document.getElementById("clienteNome").value;
-  let servico=document.getElementById("clienteServico").value;
-  let valor=parseFloat(document.getElementById("clienteValor").value)||0;
-  let pagamento=document.getElementById("clientePagamento").value;
+// Atualiza valor ao trocar produto
+function atualizarValorVenda(){
+  let i=document.getElementById("vendaProduto").value;
+  if(i!=="") document.getElementById("vendaValor").value=dados.estoque[i].valor;
+}
+document.getElementById("vendaProduto").addEventListener("change", atualizarValorVenda);
 
-  if(!nome || !servico || !valor){ alert("Preencha todos os campos do cliente!"); return; }
+// Exibir campo troco
+function toggleTroco(){
+  let pagamento=document.getElementById("vendaPagamento").value;
+  document.getElementById("trocoArea").classList.toggle("hidden", pagamento!=="Dinheiro");
+}
 
-  // desconto do estoque
-  let item=dados[negocioAtual].find(p=>p.produto===servico && p.tipo==="estoque");
-  if(item){
-    if(item.quantidade>0){ item.quantidade--; }
-    else{ alert("❌ Estoque insuficiente!"); return; }
+// Registrar venda
+function registrarVenda(){
+  let i=document.getElementById("vendaProduto").value;
+  if(i===""){ alert("Selecione um produto!"); return; }
+  let produto=dados.estoque[i];
+  let valor=parseFloat(document.getElementById("vendaValor").value)||0;
+  let pagamento=document.getElementById("vendaPagamento").value;
+  let data=document.getElementById("vendaData").value || new Date().toLocaleDateString();
+
+  let troco=0;
+  if(pagamento==="Dinheiro"){
+    let recebido=parseFloat(document.getElementById("valorRecebido").value)||0;
+    if(recebido<valor){ alert("Valor recebido insuficiente!"); return; }
+    troco=recebido-valor;
   }
+
+  // baixa estoque se for produto
+  if(produto.qtd && produto.qtd>0){ produto.qtd--; }
 
   // salvar venda
-  let registro={tipo:"cliente", nome, servico, valor, pagamento, data:new Date().toLocaleDateString()};
-  dados[negocioAtual].push(registro);
+  let venda={tipo:"venda", produto:produto.nome, valor, pagamento, troco, data};
+  dados.vendas.push(venda);
 
-  // atualizar financeiro e salvar registro
-  let saldoAtual=atualizarFinanceiro(valor,0);
-  let registroFinanceiro={
-    tipo:"financeiro",
-    entrada:valor,
-    saida:0,
-    saldo:saldoAtual,
-    pagamento,
-    data:new Date().toLocaleDateString()
-  };
-  dados[negocioAtual].push(registroFinanceiro);
+  // atualizar financeiro
+  let entradas=valor;
+  let saidas=troco;
+  let saldoAtual=(dados.financeiro.length?dados.financeiro[dados.financeiro.length-1].saldo:0)+entradas-saidas;
+  dados.financeiro.push({tipo:"financeiro", entrada:entradas, saida:saidas, saldo:saldoAtual, data});
 
-  salvarLocal();
-  alert("✅ Cliente registrado com sucesso!");
-  document.getElementById("clienteNome").value="";
-  document.getElementById("clienteServico").value="";
-  document.getElementById("clienteValor").value="";
+  salvar();
+  alert("✅ Venda registrada!");
+  atualizarFinanceiroUI();
 }
 
-// Estoque
+// Adicionar estoque
 function adicionarEstoque(){
-  let produto=document.getElementById("estoqueProduto").value;
-  let quantidade=parseInt(document.getElementById("estoqueQtd").value)||0;
-  let preco=parseFloat(document.getElementById("estoquePreco").value)||0;
-  if(!produto || quantidade<=0 || preco<=0){ alert("Preencha todos os campos do estoque!"); return; }
-  dados[negocioAtual].push({tipo:"estoque", produto, quantidade, preco});
-  salvarLocal();
-  alert("✅ Produto adicionado ao estoque!");
-}
-function editarEstoque(){
-  let produto=document.getElementById("estoqueProduto").value;
-  let item=dados[negocioAtual].find(p=>p.produto===produto && p.tipo==="estoque");
-  if(item){
-    item.quantidade=parseInt(document.getElementById("estoqueQtd").value)||item.quantidade;
-    item.preco=parseFloat(document.getElementById("estoquePreco").value)||item.preco;
-    salvarLocal();
-    alert("✏️ Produto atualizado!");
-  } else alert("❌ Produto não encontrado no estoque!");
-}
-function removerEstoque(){
-  let produto=document.getElementById("estoqueProduto").value;
-  dados[negocioAtual]=dados[negocioAtual].filter(p=>!(p.produto===produto && p.tipo==="estoque"));
-  salvarLocal();
-  alert("🗑️ Produto removido do estoque!");
+  let nome=document.getElementById("estoqueNome").value;
+  let valor=parseFloat(document.getElementById("estoqueValor").value)||0;
+  let qtd=parseInt(document.getElementById("estoqueQtd").value)||null;
+  if(!nome||!valor){ alert("Preencha nome e valor!"); return; }
+  dados.estoque.push({nome,valor,qtd});
+  salvar();
+  atualizarSelect();
+  alert("✅ Produto/Serviço cadastrado!");
 }
 
-// Financeiro
-function atualizarCaixa(){
+// Definir caixa inicial
+function definirCaixa(){
   let inicial=parseFloat(document.getElementById("caixaInicial").value)||0;
-  let registroCaixa={tipo:"caixa", inicial, data:new Date().toLocaleDateString()};
-  dados[negocioAtual].push(registroCaixa);
-
-  let registroFinanceiro={
-    tipo:"financeiro",
-    entrada:inicial,
-    saida:0,
-    saldo:inicial,
-    pagamento:"Caixa Inicial",
-    data:new Date().toLocaleDateString()
-  };
-  dados[negocioAtual].push(registroFinanceiro);
-
-  salvarLocal();
-  alert("✅ Caixa inicial atualizado!");
-  document.getElementById("finSaldo").innerText=inicial;
-  document.getElementById("finEntradas").innerText=inicial;
-}
-function atualizarFinanceiro(entrada,saida){
-  let entradas=entrada||0;
-  let saidas=saida||0;
-  let saldoAtual=parseFloat(document.getElementById("finSaldo").innerText)||0;
-  saldoAtual=saldoAtual+entradas-saidas;
-  document.getElementById("finEntradas").innerText=(parseFloat(document.getElementById("finEntradas").innerText)||0)+entradas;
-  document.getElementById("finSaidas").innerText=(parseFloat(document.getElementById("finSaidas").innerText)||0)+saidas;
-  document.getElementById("finSaldo").innerText=saldoAtual;
-  return saldoAtual;
+  dados.financeiro.push({tipo:"financeiro", entrada:inicial, saida:0, saldo:inicial, data:new Date().toLocaleDateString()});
+  salvar();
+  atualizarFinanceiroUI();
+  alert("✅ Caixa inicial definido!");
 }
 
-// Salvar LocalStorage
-function salvarLocal(){ localStorage.setItem("dashBusiness", JSON.stringify(dados)); }
-
-// Limpar
-function limparDados(){
-  if(confirm("Deseja apagar todos os dados?")){
-    dados={delivery:[], salao:[], ecommerce:[], academia:[]};
-    salvarLocal();
-    alert("🗑️ Dados apagados!");
-  }
+// Atualizar UI financeiro
+function atualizarFinanceiroUI(){
+  let entradas=dados.financeiro.reduce((s,f)=>s+(f.entrada||0),0);
+  let saidas=dados.financeiro.reduce((s,f)=>s+(f.saida||0),0);
+  let saldo=dados.financeiro.length?dados.financeiro[dados.financeiro.length-1].saldo:0;
+  document.getElementById("finEntradas").innerText=entradas;
+  document.getElementById("finSaidas").innerText=saidas;
+  document.getElementById("finSaldo").innerText=saldo;
 }
 
-// Exportar CSV
-function exportarCSV(){
-  let registros=dados[negocioAtual];
-  if(registros.length===0){ alert("Nenhum dado para exportar!"); return; }
-  let csv=Object.keys(registros[0]).join(",")+"\n";
-  registros.forEach(r=>{ csv+=Object.values(r).join(",")+"\n"; });
-  let blob=new Blob([csv],{type:"text/csv"});
-  let url=URL.createObjectURL(blob);
-  let a=document.createElement("a");
-  a.href=url;
-  a.download=`${negocioAtual}_dados.csv`;
-  a.click();
-}
+// Salvar localStorage
+function salvar(){ localStorage.setItem("dashBusiness", JSON.stringify(dados)); atualizarFinanceiroUI(); atualizarSelect(); }
+
+// Inicialização
+window.onload=()=>{
+  document.getElementById("vendaData").value=new Date().toISOString().split("T")[0];
+  atualizarSelect();
+  atualizarFinanceiroUI();
+};
 </script>
 
 </body>
