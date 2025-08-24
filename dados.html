@@ -134,7 +134,9 @@ function registrarVenda(){
   }
 
   // baixa estoque se for produto
-  if(produto.qtd && produto.qtd>0){ produto.qtd--; }
+  if(produto.quantidade !== null && produto.quantidade > 0){ 
+    produto.quantidade--; 
+  }
 
   // salvar venda
   let venda={tipo:"venda", produto:produto.nome, valor, pagamento, troco, data};
@@ -148,17 +150,28 @@ function registrarVenda(){
 
   salvar();
   alert("✅ Venda registrada!");
-  atualizarFinanceiroUI();
+
+  // limpar campos
+  document.getElementById("valorRecebido").value="";
 }
 
 // Adicionar estoque
 function adicionarEstoque(){
   let nome=document.getElementById("estoqueNome").value;
   let valor=parseFloat(document.getElementById("estoqueValor").value)||0;
-  let qtd=parseInt(document.getElementById("estoqueQtd").value)||null;
+  let quantidade=parseInt(document.getElementById("estoqueQtd").value);
   if(!nome||!valor){ alert("Preencha nome e valor!"); return; }
-  dados.estoque.push({nome,valor,qtd});
+
+  if(isNaN(quantidade)) quantidade = null; // serviço
+
+  dados.estoque.push({nome,valor,quantidade});
   salvar();
+
+  // limpa formulário
+  document.getElementById("estoqueNome").value="";
+  document.getElementById("estoqueValor").value="";
+  document.getElementById("estoqueQtd").value="";
+
   atualizarSelect();
   alert("✅ Produto/Serviço cadastrado!");
 }
@@ -166,7 +179,8 @@ function adicionarEstoque(){
 // Definir caixa inicial
 function definirCaixa(){
   let inicial=parseFloat(document.getElementById("caixaInicial").value)||0;
-  dados.financeiro.push({tipo:"financeiro", entrada:inicial, saida:0, saldo:inicial, data:new Date().toLocaleDateString()});
+  let registro={tipo:"financeiro", entrada:inicial, saida:0, saldo:inicial, data:new Date().toLocaleDateString()};
+  dados.financeiro.push(registro);
   salvar();
   atualizarFinanceiroUI();
   alert("✅ Caixa inicial definido!");
@@ -183,7 +197,11 @@ function atualizarFinanceiroUI(){
 }
 
 // Salvar localStorage
-function salvar(){ localStorage.setItem("dashBusiness", JSON.stringify(dados)); atualizarFinanceiroUI(); atualizarSelect(); }
+function salvar(){ 
+  localStorage.setItem("dashBusiness", JSON.stringify(dados)); 
+  atualizarFinanceiroUI(); 
+  atualizarSelect(); 
+}
 
 // Inicialização
 window.onload=()=>{
