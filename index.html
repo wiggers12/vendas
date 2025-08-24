@@ -3,21 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DashControl Premium</title>
+  <title>DashControl Premium 3D</title>
 
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+  <!-- ECharts -->
+  <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
 
-  <!-- Fonte moderna -->
+  <!-- Fonte Premium -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 
   <style>
     body { margin:0; font-family:'Poppins', sans-serif; background:#0d0d0d; color:white; text-align:center; }
-    header { background:linear-gradient(90deg,#8e44ad,#b8860b); padding:15px; font-size:24px; font-weight:700; letter-spacing:1px; }
+    header { background:linear-gradient(90deg,#8e44ad,#b8860b); padding:15px; font-size:24px; font-weight:700; }
     nav { display:flex; justify-content:center; gap:10px; background:#1e1e1e; padding:10px; flex-wrap:wrap; }
-    nav button { background:#8e44ad; border:none; padding:10px 15px; color:white; border-radius:8px; cursor:pointer; min-width:120px; font-weight:bold; font-size:15px; }
-    nav button:hover { background:#b8860b; transition:0.3s; }
+    nav button { background:#8e44ad; border:none; padding:10px 15px; color:white; border-radius:8px; cursor:pointer; font-weight:600; }
+    nav button:hover { background:#b8860b; }
     .page { display:none; padding:20px; max-width:1200px; margin:auto; }
     h2 { color:#d4af37; margin-bottom:20px; font-weight:700; font-size:22px; }
 
@@ -25,27 +24,20 @@
     .splash { position:fixed; top:0; left:0; width:100%; height:100%; 
       background:linear-gradient(135deg,#0d0d0d,#8e44ad,#b8860b); 
       display:flex; align-items:center; justify-content:center; flex-direction:column; 
-      color:#fff; font-size:36px; font-weight:bold; z-index:9999; text-align:center; animation:fadeIn 1.5s; }
-    .splash small { color:#ddd; margin-top:10px; font-size:16px; }
+      color:#fff; font-size:42px; font-weight:bold; z-index:9999; text-align:center; animation:fadeIn 1.5s; }
+    .splash small { color:#ddd; margin-top:10px; font-size:18px; }
     @keyframes fadeIn { from{opacity:0} to{opacity:1} }
 
     /* Formulário Admin */
     form { max-width:600px; margin:auto; text-align:left; }
     label { display:block; margin:10px 0 5px; font-weight:600; color:#d4af37; }
     input, select { padding:10px; border-radius:6px; border:none; width:100%; background:#2c2c2c; color:white; font-size:14px; }
-    button.action { background:#8e44ad; padding:12px; margin:10px 5px; border:none; border-radius:8px; color:white; font-weight:bold; cursor:pointer; font-size:15px; }
+    button.action { background:#8e44ad; padding:12px; margin:10px 5px; border:none; border-radius:8px; color:white; font-weight:bold; cursor:pointer; }
     button.action:hover { background:#b8860b; }
 
     /* Dashboard */
-    .card { 
-      background:linear-gradient(160deg,#1a1a1a,#111); 
-      border-radius:12px; 
-      padding:20px; 
-      margin:25px auto; 
-      max-width:1000px; 
-      box-shadow:0 4px 20px rgba(0,0,0,0.6); 
-    }
-    canvas { width:100% !important; height:380px !important; }
+    .chart-card { background:#1a1a1a; border-radius:12px; padding:15px; margin:20px auto; box-shadow:0 4px 20px rgba(0,0,0,0.6); }
+    .chart { width:100%; height:400px; }
   </style>
 </head>
 <body>
@@ -57,7 +49,7 @@
   </div>
 
   <!-- Cabeçalho -->
-  <header>📊 DashControl Premium</header>
+  <header>📊 DashControl Premium 3D</header>
   <nav>
     <button onclick="showPage('admin')">⚙️ Inserir Dados</button>
     <button onclick="showPage('dashboard')">📈 Dashboard</button>
@@ -100,12 +92,12 @@
 
   <!-- Dashboard -->
   <div id="dashboard" class="page">
-    <h2>Dashboard Premium</h2>
-    <div class="card"><canvas id="graficoVendas"></canvas></div>
-    <div class="card"><canvas id="graficoCategoria"></canvas></div>
-    <div class="card"><canvas id="graficoReceita"></canvas></div>
-    <div class="card"><canvas id="graficoLinha"></canvas></div>
-    <div class="card"><canvas id="graficoRegiao"></canvas></div>
+    <h2>Dashboard Premium 3D</h2>
+    <div class="chart-card"><div id="chartVendas" class="chart"></div></div>
+    <div class="chart-card"><div id="chartCategoria" class="chart"></div></div>
+    <div class="chart-card"><div id="chartReceita" class="chart"></div></div>
+    <div class="chart-card"><div id="chartLinha" class="chart"></div></div>
+    <div class="chart-card"><div id="chartRegiao" class="chart"></div></div>
   </div>
 
 <script>
@@ -148,56 +140,64 @@
   function atualizarDashboard(){
     if(produtos.length===0){ alert("Nenhum dado cadastrado!"); return; }
 
-    const configPadrao={
-      plugins:{
-        title:{display:true, color:"#d4af37", font:{size:20, weight:"bold"}},
-        legend:{labels:{color:'#ccc', font:{size:14}}},
-        datalabels:{color:'#fff', anchor:'end', align:'top', font:{weight:'bold', size:14}, textStrokeColor:"#000", textStrokeWidth:3}
-      },
-      scales:{x:{ticks:{color:'#fff', font:{size:13}}}, y:{ticks:{color:'#fff', font:{size:13}}}}
-    };
-
-    // Vendas por Produto
-    new Chart(document.getElementById("graficoVendas"), {
-      type:"bar",
-      data:{labels:produtos.map(p=>p.nome), datasets:[{label:"Vendas", data:produtos.map(p=>p.vendas), backgroundColor:["#d4af37","#8e44ad","#1abc9c","#e74c3c","#3498db"]}]},
-      options:{...configPadrao, plugins:{...configPadrao.plugins, title:{...configPadrao.plugins.title, text:"📊 Vendas por Produto"}}},
-      plugins:[ChartDataLabels]
+    // Vendas por Produto (Barras 3D fake com sombras)
+    let chartVendas=echarts.init(document.getElementById('chartVendas'));
+    chartVendas.setOption({
+      title:{text:"📊 Vendas por Produto", textStyle:{color:'#d4af37', fontSize:20}},
+      xAxis:{type:'category', data:produtos.map(p=>p.nome), axisLabel:{color:'#fff'}},
+      yAxis:{type:'value', axisLabel:{color:'#fff'}},
+      series:[{data:produtos.map(p=>p.vendas), type:'bar',
+        itemStyle:{color:'#8e44ad', shadowColor:'#000', shadowBlur:10, borderRadius:6},
+        label:{show:true, color:'#fff', fontWeight:'bold'}
+      }]
     });
 
     // Receita por Categoria
-    let categorias={};
-    produtos.forEach(p=>{ categorias[p.categoria]=(categorias[p.categoria]||0)+p.receita; });
-    new Chart(document.getElementById("graficoCategoria"), {
-      type:"bar",
-      data:{labels:Object.keys(categorias), datasets:[{label:"Receita", data:Object.values(categorias), backgroundColor:["#8e44ad","#d4af37","#1abc9c"]}]},
-      options:{...configPadrao, plugins:{...configPadrao.plugins, title:{...configPadrao.plugins.title, text:"💰 Receita por Categoria"}}},
-      plugins:[ChartDataLabels]
+    let categorias={}; produtos.forEach(p=>{ categorias[p.categoria]=(categorias[p.categoria]||0)+p.receita; });
+    let chartCategoria=echarts.init(document.getElementById('chartCategoria'));
+    chartCategoria.setOption({
+      title:{text:"💰 Receita por Categoria", textStyle:{color:'#d4af37', fontSize:20}},
+      xAxis:{type:'category', data:Object.keys(categorias), axisLabel:{color:'#fff'}},
+      yAxis:{type:'value', axisLabel:{color:'#fff'}},
+      series:[{data:Object.values(categorias), type:'bar',
+        itemStyle:{color:'#b8860b', shadowColor:'#000', shadowBlur:10, borderRadius:6},
+        label:{show:true, color:'#fff', fontWeight:'bold'}
+      }]
     });
 
-    // Receita por Produto (Pizza)
-    new Chart(document.getElementById("graficoReceita"), {
-      type:"doughnut",
-      data:{labels:produtos.map(p=>p.nome), datasets:[{data:produtos.map(p=>p.receita), backgroundColor:["#d4af37","#8e44ad","#1abc9c","#e74c3c","#3498db"]}]},
-      options:{plugins:{legend:{labels:{color:'#fff', font:{size:14}}}, title:{display:true, text:"🍩 Participação na Receita", color:"#d4af37", font:{size:20, weight:"bold"}}}},
-      plugins:[ChartDataLabels]
+    // Receita por Produto (Donut 3D fake)
+    let chartReceita=echarts.init(document.getElementById('chartReceita'));
+    chartReceita.setOption({
+      title:{text:"🍩 Participação na Receita", textStyle:{color:'#d4af37', fontSize:20}},
+      series:[{
+        type:'pie', radius:['40%','70%'],
+        data:produtos.map(p=>({name:p.nome, value:p.receita})),
+        itemStyle:{shadowBlur:15, shadowColor:'#000'},
+        label:{color:'#fff', fontWeight:'bold'}
+      }]
     });
 
-    // Receita ao longo do tempo
-    new Chart(document.getElementById("graficoLinha"), {
-      type:"line",
-      data:{labels:produtos.map(p=>p.data), datasets:[{label:"Receita", data:produtos.map(p=>p.receita), borderColor:"#8e44ad", backgroundColor:"rgba(142,68,173,0.3)", fill:true, tension:0.3}]},
-      options:{...configPadrao, plugins:{...configPadrao.plugins, title:{...configPadrao.plugins.title, text:"📈 Receita ao Longo do Tempo"}}}
+    // Receita no Tempo (Linha suave)
+    let chartLinha=echarts.init(document.getElementById('chartLinha'));
+    chartLinha.setOption({
+      title:{text:"📈 Receita ao Longo do Tempo", textStyle:{color:'#d4af37', fontSize:20}},
+      xAxis:{type:'category', data:produtos.map(p=>p.data), axisLabel:{color:'#fff'}},
+      yAxis:{type:'value', axisLabel:{color:'#fff'}},
+      series:[{data:produtos.map(p=>p.receita), type:'line', smooth:true,
+        itemStyle:{color:'#1abc9c'}, areaStyle:{color:'rgba(26,188,156,0.4)'}}]
     });
 
     // Receita por Região
-    let regioes={};
-    produtos.forEach(p=>{ regioes[p.regiao]=(regioes[p.regiao]||0)+p.receita; });
-    new Chart(document.getElementById("graficoRegiao"), {
-      type:"bar",
-      data:{labels:Object.keys(regioes), datasets:[{label:"Receita", data:Object.values(regioes), backgroundColor:["#1abc9c","#e74c3c","#3498db","#d4af37"]}]},
-      options:{...configPadrao, plugins:{...configPadrao.plugins, title:{...configPadrao.plugins.title, text:"🌍 Receita por Região"}}},
-      plugins:[ChartDataLabels]
+    let regioes={}; produtos.forEach(p=>{ regioes[p.regiao]=(regioes[p.regiao]||0)+p.receita; });
+    let chartRegiao=echarts.init(document.getElementById('chartRegiao'));
+    chartRegiao.setOption({
+      title:{text:"🌍 Receita por Região", textStyle:{color:'#d4af37', fontSize:20}},
+      xAxis:{type:'category', data:Object.keys(regioes), axisLabel:{color:'#fff'}},
+      yAxis:{type:'value', axisLabel:{color:'#fff'}},
+      series:[{data:Object.values(regioes), type:'bar',
+        itemStyle:{color:'#e74c3c', shadowColor:'#000', shadowBlur:10, borderRadius:6},
+        label:{show:true, color:'#fff', fontWeight:'bold'}
+      }]
     });
   }
 </script>
