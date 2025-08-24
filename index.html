@@ -2,147 +2,183 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gigas - Gás e Água</title>
-
-  <!-- Manifest -->
-  <link rel="manifest" href="manifest.json">
-
-  <!-- Favicon -->
-  <link rel="icon" type="image/png" sizes="32x32" href="IMG_6128.jpeg">
-
-  <!-- PWA Colors -->
-  <meta name="theme-color" content="#0d47a1">
-
-  <!-- Estilo -->
+  <title>Gigas - Sistema Demo</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #f4f6f9;
-    }
-    header {
-      background: #0d47a1;
-      color: white;
-      padding: 15px;
-      text-align: center;
-      font-size: 22px;
-    }
-    .splash {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: #0d47a1;
-      color: white;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      font-size: 24px;
-      z-index: 9999;
-    }
-    .catalogo {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 15px;
-      padding: 20px;
-    }
-    .produto {
-      background: white;
-      border-radius: 8px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-      padding: 10px;
-      text-align: center;
-    }
-    .produto img {
-      width: 100%;
-      height: 140px;
-      object-fit: cover;
-      border-radius: 6px;
-    }
-    .produto h3 {
-      font-size: 16px;
-      margin: 10px 0;
-      color: #0d47a1;
-    }
-    .produto button {
-      background: #0d47a1;
-      color: white;
-      border: none;
-      padding: 8px 14px;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 14px;
-    }
-    .produto button:hover {
-      background: #08306b;
-    }
+    body { font-family: Arial; margin: 0; background: #f4f6f9; }
+    header { background: #004aad; color: white; padding: 15px; text-align: center; font-size: 22px; }
+    nav { text-align: center; margin: 20px; }
+    nav button { margin: 5px; padding: 10px 20px; border: none; border-radius: 5px; background: #004aad; color: white; cursor: pointer; }
+    nav button:hover { background: #08306b; }
+    .page { display: none; padding: 20px; }
+    h2 { color: #004aad; }
+    form input, form select, form button { display: block; margin: 10px 0; padding: 8px; width: 100%; max-width: 300px; }
+    form button { background: #004aad; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    form button:hover { background: #08306b; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+    .card { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px; }
+    .kpi { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); text-align: center; }
+    .kpi h3 { margin: 0; font-size: 18px; color: #004aad; }
+    .kpi p { font-size: 24px; margin: 5px 0 0; font-weight: bold; }
+    canvas { width: 100% !important; height: 300px !important; }
   </style>
 </head>
 <body>
 
-  <!-- Splash -->
-  <div class="splash" id="splash">
-    <img src="IMG_6128.jpeg" alt="Logo Gigas" style="width:100px; height:100px; border-radius:50%; margin-bottom:20px;">
-    <p>Gigas - Gás e Água</p>
+<header>Gigas - Sistema Demo</header>
+
+<nav>
+  <button onclick="showPage('entregador')">📦 Entregador</button>
+  <button onclick="showPage('estoque')">🏪 Estoque</button>
+  <button onclick="showPage('dashboard')">📊 Dashboard</button>
+</nav>
+
+<!-- Página Entregador -->
+<div id="entregador" class="page">
+  <h2>Registro de Entregas</h2>
+  <form id="formEntrega">
+    <input type="text" id="entregadorNome" placeholder="Nome do entregador" required>
+    <input type="text" id="produtoEntrega" placeholder="Produto (ex: P13)" required>
+    <input type="number" id="quantidadeEntrega" placeholder="Quantidade" required>
+    <button type="submit">Registrar Entrega</button>
+  </form>
+</div>
+
+<!-- Página Estoque -->
+<div id="estoque" class="page">
+  <h2>Controle de Estoque</h2>
+  <form id="formEstoque">
+    <input type="text" id="produtoEstoque" placeholder="Produto (ex: P13)" required>
+    <select id="tipoMovimento">
+      <option value="entrada">Entrada</option>
+      <option value="saida">Saída</option>
+    </select>
+    <input type="number" id="quantidadeEstoque" placeholder="Quantidade" required>
+    <button type="submit">Registrar Movimento</button>
+  </form>
+</div>
+
+<!-- Página Dashboard -->
+<div id="dashboard" class="page">
+  <h2>Dashboard em tempo real</h2>
+
+  <!-- KPIs -->
+  <div class="kpi-grid">
+    <div class="kpi">
+      <h3>Total de Entregas</h3>
+      <p id="kpiEntregas">0</p>
+    </div>
+    <div class="kpi">
+      <h3>Produtos Entregues</h3>
+      <p id="kpiProdutosEntregues">0</p>
+    </div>
+    <div class="kpi">
+      <h3>Total em Estoque</h3>
+      <p id="kpiEstoque">0</p>
+    </div>
+    <div class="kpi">
+      <h3>Produtos em Estoque</h3>
+      <p id="kpiProdutosEstoque">0</p>
+    </div>
   </div>
 
-  <!-- Cabeçalho -->
-  <header>Catálogo Gigas</header>
-
-  <!-- Catálogo -->
-  <div class="catalogo">
-
-    <div class="produto">
-      <img src="IMG_6169.jpeg" alt="Água Mineral 20L">
-      <h3>Água Mineral 20L</h3>
-      <button onclick="window.open('https://wa.me/5551989448805?text=Quero+Água+Mineral+20L')">Pedir</button>
-    </div>
-
-    <div class="produto">
-      <img src="IMG_6170.jpeg" alt="Botijão de Gás 13kg">
-      <h3>Botijão de Gás 13kg</h3>
-      <button onclick="window.open('https://wa.me/5551989448805?text=Quero+Botijão+de+Gás+13kg')">Pedir</button>
-    </div>
-
-    <div class="produto">
-      <img src="IMG_6173.jpeg" alt="Água Mineral 10L">
-      <h3>Água Mineral 10L</h3>
-      <button onclick="window.open('https://wa.me/5551989448805?text=Quero+Água+Mineral+10L')">Pedir</button>
-    </div>
-
-    <div class="produto">
-      <img src="IMG_6174.jpeg" alt="Água Mineral 5L">
-      <h3>Água Mineral 5L</h3>
-      <button onclick="window.open('https://wa.me/5551989448805?text=Quero+Água+Mineral+5L')">Pedir</button>
-    </div>
-
-    <div class="produto">
-      <img src="IMG_6138.png" alt="Copo de Água">
-      <h3>Copo de Água</h3>
-      <button onclick="window.open('https://wa.me/5551989448805?text=Quero+Copo+de+Água')">Pedir</button>
-    </div>
-
-    <div class="produto">
-      <img src="IMG_6139.png" alt="Galão de Água">
-      <h3>Galão de Água</h3>
-      <button onclick="window.open('https://wa.me/5551989448805?text=Quero+Galão+de+Água')">Pedir</button>
-    </div>
-
+  <!-- Gráficos -->
+  <div class="grid">
+    <div class="card"><canvas id="graficoEntregas"></canvas></div>
+    <div class="card"><canvas id="graficoEstoque"></canvas></div>
+    <div class="card"><canvas id="graficoPizza"></canvas></div>
   </div>
+</div>
 
-  <!-- Script Splash -->
-  <script>
-    window.addEventListener("load", () => {
-      setTimeout(() => {
-        document.getElementById("splash").style.display = "none";
-      }, 2000);
+<script>
+  // Mostrar páginas
+  function showPage(id) {
+    document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
+    document.getElementById(id).style.display = 'block';
+    if (id === 'dashboard') atualizarGraficos();
+  }
+  showPage('entregador'); // inicia na tela de entregador
+
+  // Registrar entrega
+  document.getElementById("formEntrega").addEventListener("submit", e => {
+    e.preventDefault();
+    const entregas = JSON.parse(localStorage.getItem("entregas")) || [];
+    entregas.push({
+      entregador: document.getElementById("entregadorNome").value,
+      produto: document.getElementById("produtoEntrega").value,
+      quantidade: parseInt(document.getElementById("quantidadeEntrega").value),
+      data: new Date().toLocaleString()
+    });
+    localStorage.setItem("entregas", JSON.stringify(entregas));
+    alert("Entrega registrada!");
+    e.target.reset();
+  });
+
+  // Registrar estoque
+  document.getElementById("formEstoque").addEventListener("submit", e => {
+    e.preventDefault();
+    const estoque = JSON.parse(localStorage.getItem("estoque")) || {};
+    const produto = document.getElementById("produtoEstoque").value;
+    const tipo = document.getElementById("tipoMovimento").value;
+    const qtd = parseInt(document.getElementById("quantidadeEstoque").value);
+
+    if (!estoque[produto]) estoque[produto] = 0;
+    if (tipo === "entrada") estoque[produto] += qtd;
+    else estoque[produto] -= qtd;
+
+    localStorage.setItem("estoque", JSON.stringify(estoque));
+    alert("Movimento registrado!");
+    e.target.reset();
+  });
+
+  // Gráficos e KPIs
+  function atualizarGraficos() {
+    const entregas = JSON.parse(localStorage.getItem("entregas")) || [];
+    const estoque = JSON.parse(localStorage.getItem("estoque")) || {};
+
+    // --- KPIs ---
+    const totalEntregas = entregas.reduce((sum, e) => sum + e.quantidade, 0);
+    const produtosEntregues = new Set(entregas.map(e => e.produto)).size;
+    const totalEstoque = Object.values(estoque).reduce((sum, qtd) => sum + qtd, 0);
+    const produtosEstoque = Object.keys(estoque).length;
+
+    document.getElementById("kpiEntregas").innerText = totalEntregas;
+    document.getElementById("kpiProdutosEntregues").innerText = produtosEntregues;
+    document.getElementById("kpiEstoque").innerText = totalEstoque;
+    document.getElementById("kpiProdutosEstoque").innerText = produtosEstoque;
+
+    // --- Gráficos ---
+    const entregasAgrupadas = {};
+    entregas.forEach(e => {
+      entregasAgrupadas[e.produto] = (entregasAgrupadas[e.produto] || 0) + e.quantidade;
     });
 
-    // Registrar Service Worker
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("sw.js");
-    }
-  </script>
+    new Chart(document.getElementById("graficoEntregas"), {
+      type: "bar",
+      data: {
+        labels: Object.keys(entregasAgrupadas),
+        datasets: [{ label: "Entregas", data: Object.values(entregasAgrupadas), backgroundColor: "#004aad" }]
+      }
+    });
+
+    new Chart(document.getElementById("graficoEstoque"), {
+      type: "line",
+      data: {
+        labels: Object.keys(estoque),
+        datasets: [{ label: "Estoque Atual", data: Object.values(estoque), borderColor: "#004aad", fill: false }]
+      }
+    });
+
+    new Chart(document.getElementById("graficoPizza"), {
+      type: "pie",
+      data: {
+        labels: Object.keys(entregasAgrupadas),
+        datasets: [{ data: Object.values(entregasAgrupadas), backgroundColor: ["#004aad","#1e88e5","#64b5f6","#90caf9"] }]
+      }
+    });
+  }
+</script>
+
 </body>
 </html>
