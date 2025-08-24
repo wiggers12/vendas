@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DashControl Business - Dados</title>
+  <title>DashControl Business - Dados (LocalStorage)</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
     body { margin:0; font-family:'Poppins', sans-serif; background:#0d0d0d; color:white; }
@@ -47,7 +47,7 @@
   </div>
 
   <label>Data da Venda:</label>
-  <input type="date" id="vendaData" value="" />
+  <input type="date" id="vendaData" />
 
   <div class="actions">
     <button onclick="registrarVenda()">💾 Registrar Venda</button>
@@ -91,7 +91,7 @@
 <script>
 let dados = JSON.parse(localStorage.getItem("dashBusiness")) || {vendas:[], estoque:[], financeiro:[]};
 
-// Preenche select de produtos
+// Atualiza o select de produtos
 function atualizarSelect(){
   let sel=document.getElementById("vendaProduto");
   sel.innerHTML="";
@@ -120,7 +120,7 @@ function toggleTroco(){
 // Registrar venda
 function registrarVenda(){
   let i=document.getElementById("vendaProduto").value;
-  if(i===""){ alert("Selecione um produto!"); return; }
+  if(i===""){ alert("⚠️ Selecione um produto!"); return; }
   let produto=dados.estoque[i];
   let valor=parseFloat(document.getElementById("vendaValor").value)||0;
   let pagamento=document.getElementById("vendaPagamento").value;
@@ -129,7 +129,7 @@ function registrarVenda(){
   let troco=0;
   if(pagamento==="Dinheiro"){
     let recebido=parseFloat(document.getElementById("valorRecebido").value)||0;
-    if(recebido<valor){ alert("Valor recebido insuficiente!"); return; }
+    if(recebido<valor){ alert("⚠️ Valor recebido insuficiente!"); return; }
     troco=recebido-valor;
   }
 
@@ -139,32 +139,31 @@ function registrarVenda(){
   }
 
   // salvar venda
-  let venda={tipo:"venda", produto:produto.nome, valor, pagamento, troco, data};
-  dados.vendas.push(venda);
+  dados.vendas.push({produto:produto.nome, valor, pagamento, troco, data});
 
   // atualizar financeiro
   let entradas=valor;
   let saidas=troco;
-  let saldoAtual=(dados.financeiro.length?dados.financeiro[dados.financeiro.length-1].saldo:0)+entradas-saidas;
-  dados.financeiro.push({tipo:"financeiro", entrada:entradas, saida:saidas, saldo:saldoAtual, data});
+  let saldoAtual=(dados.financeiro.length ? dados.financeiro[dados.financeiro.length-1].saldo : 0) + entradas - saidas;
+  dados.financeiro.push({entrada:entradas, saida:saidas, saldo:saldoAtual, data});
 
   salvar();
   alert("✅ Venda registrada!");
-
-  // limpar campos
   document.getElementById("valorRecebido").value="";
 }
 
 // Adicionar estoque
 function adicionarEstoque(){
-  let nome=document.getElementById("estoqueNome").value;
-  let valor=parseFloat(document.getElementById("estoqueValor").value)||0;
-  let quantidade=parseInt(document.getElementById("estoqueQtd").value);
-  if(!nome||!valor){ alert("Preencha nome e valor!"); return; }
+  let nome=document.getElementById("estoqueNome").value.trim();
+  let valor=parseFloat(document.getElementById("estoqueValor").value);
+  let qtdInput=document.getElementById("estoqueQtd").value;
+  if(!nome || isNaN(valor)){ 
+    alert("⚠️ Preencha pelo menos nome e valor!");
+    return; 
+  }
+  let quantidade = qtdInput === "" ? null : parseInt(qtdInput);
 
-  if(isNaN(quantidade)) quantidade = null; // serviço
-
-  dados.estoque.push({nome,valor,quantidade});
+  dados.estoque.push({nome, valor, quantidade});
   salvar();
 
   // limpa formulário
@@ -179,8 +178,7 @@ function adicionarEstoque(){
 // Definir caixa inicial
 function definirCaixa(){
   let inicial=parseFloat(document.getElementById("caixaInicial").value)||0;
-  let registro={tipo:"financeiro", entrada:inicial, saida:0, saldo:inicial, data:new Date().toLocaleDateString()};
-  dados.financeiro.push(registro);
+  dados.financeiro.push({entrada:inicial, saida:0, saldo:inicial, data:new Date().toLocaleDateString()});
   salvar();
   atualizarFinanceiroUI();
   alert("✅ Caixa inicial definido!");
@@ -196,9 +194,10 @@ function atualizarFinanceiroUI(){
   document.getElementById("finSaldo").innerText=saldo;
 }
 
-// Salvar localStorage
+// Salvar no LocalStorage
 function salvar(){ 
   localStorage.setItem("dashBusiness", JSON.stringify(dados)); 
+  console.log("💾 Dados salvos:", dados); // debug
   atualizarFinanceiroUI(); 
   atualizarSelect(); 
 }
