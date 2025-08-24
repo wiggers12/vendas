@@ -7,173 +7,6 @@
 
   <!-- ECharts -->
   <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
-
-  <!-- Fonte --><!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DashControl Business - Dados</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-  <style>
-    body { margin:0; font-family:'Poppins', sans-serif; background:#0d0d0d; color:white; }
-    header { background:linear-gradient(90deg,#8e44ad,#b8860b); padding:15px; font-size:22px; font-weight:700; text-align:center; }
-    h2 { color:#d4af37; margin:15px 0; text-align:center; }
-    section { background:#1a1a1a; padding:20px; margin:20px auto; border-radius:12px; max-width:600px; box-shadow:0 4px 20px rgba(0,0,0,0.6); }
-    label { display:block; margin:10px 0 5px; font-weight:600; color:#d4af37; }
-    input, select { padding:10px; border-radius:6px; border:none; width:100%; background:#2c2c2c; color:white; font-size:14px; }
-    .btn { background:#8e44ad; padding:12px; margin-top:10px; border-radius:8px; color:white; font-weight:bold; cursor:pointer; text-align:center; }
-    .btn:hover { background:#b8860b; }
-    .msg { margin-top:10px; font-size:14px; }
-  </style>
-</head>
-<body>
-
-<header>⚙️ DashControl Business - Inserção de Dados</header>
-
-<!-- Cadastro de Produtos/Serviços -->
-<section>
-  <h2>📦 Cadastro de Produtos/Serviços</h2>
-  <label>Nome:</label>
-  <input type="text" id="nomeProd">
-
-  <label>Valor Unitário (R$):</label>
-  <input type="number" id="valorProd">
-
-  <label>Quantidade (deixe vazio se for serviço):</label>
-  <input type="number" id="qtdProd">
-
-  <div class="btn" onclick="adicionarProduto()">➕ Adicionar Produto</div>
-  <p id="msgProd" class="msg"></p>
-</section>
-
-<!-- Registro de Venda -->
-<section>
-  <h2>🛒 Registrar Venda</h2>
-  <label>Produto/Serviço:</label>
-  <select id="vendaProduto"></select>
-
-  <label>Forma de Pagamento:</label>
-  <select id="vendaPagamento">
-    <option value="Dinheiro">💵 Dinheiro</option>
-    <option value="Pix">⚡ Pix</option>
-    <option value="Débito">💳 Débito</option>
-    <option value="Crédito">💳 Crédito</option>
-  </select>
-
-  <label>Valor Recebido (se dinheiro):</label>
-  <input type="number" id="vendaRecebido">
-
-  <div class="btn" onclick="registrarVenda()">💾 Registrar Venda</div>
-  <p id="msgVenda" class="msg"></p>
-</section>
-
-<!-- Financeiro -->
-<section>
-  <h2>💰 Financeiro</h2>
-  <label>Caixa Inicial (R$):</label>
-  <input type="number" id="caixaInicial">
-  <div class="btn" onclick="definirCaixa()">📌 Definir Caixa Inicial</div>
-  <div class="msg">
-    Entradas: <span id="finEntradas">0</span> | 
-    Saídas: <span id="finSaidas">0</span> | 
-    Saldo Atual: <span id="finSaldo">0</span>
-  </div>
-</section>
-
-<script>
-let dados = JSON.parse(localStorage.getItem("dashBusiness")) || {produtos:[], vendas:[], financeiro:{caixa:0, entradas:0, saidas:0, saldo:0}};
-
-// Salvar no localStorage
-function salvar(){
-  localStorage.setItem("dashBusiness", JSON.stringify(dados));
-}
-
-// Atualizar select de produtos
-function atualizarSelect(){
-  let select=document.getElementById("vendaProduto");
-  select.innerHTML="";
-  dados.produtos.forEach((p,i)=>{
-    let opt=document.createElement("option");
-    opt.value=i;
-    opt.textContent=p.nome+" (R$ "+p.valor+")";
-    select.appendChild(opt);
-  });
-}
-
-// Adicionar Produto
-function adicionarProduto(){
-  let nome=document.getElementById("nomeProd").value;
-  let valor=parseFloat(document.getElementById("valorProd").value)||0;
-  let qtd=parseInt(document.getElementById("qtdProd").value)||0;
-
-  if(!nome || valor<=0){
-    document.getElementById("msgProd").innerText="❌ Preencha nome e valor!";
-    return;
-  }
-
-  dados.produtos.push({nome, valor, qtd});
-  salvar();
-  atualizarSelect();
-  document.getElementById("msgProd").innerText="✅ Produto adicionado!";
-  document.getElementById("nomeProd").value="";
-  document.getElementById("valorProd").value="";
-  document.getElementById("qtdProd").value="";
-}
-
-// Registrar Venda
-function registrarVenda(){
-  let idx=document.getElementById("vendaProduto").value;
-  if(idx===""){ alert("Selecione um produto!"); return; }
-  let produto=dados.produtos[idx];
-  let pagamento=document.getElementById("vendaPagamento").value;
-  let recebido=parseFloat(document.getElementById("vendaRecebido").value)||produto.valor;
-
-  // Estoque
-  if(produto.qtd && produto.qtd>0){ produto.qtd--; }
-
-  // Troco
-  let troco=0;
-  if(pagamento==="Dinheiro" && recebido>produto.valor){
-    troco=recebido-produto.valor;
-    dados.financeiro.saidas+=troco;
-  }
-
-  // Registro de venda
-  dados.vendas.push({produto:produto.nome, valor:produto.valor, pagamento, data:new Date().toLocaleDateString(), troco});
-  dados.financeiro.entradas+=produto.valor;
-  dados.financeiro.saldo=(dados.financeiro.caixa||0)+dados.financeiro.entradas-dados.financeiro.saidas;
-
-  salvar();
-  atualizarSelect();
-  atualizarFinanceiro();
-  document.getElementById("msgVenda").innerText="✅ Venda registrada!";
-}
-
-// Definir caixa inicial
-function definirCaixa(){
-  let inicial=parseFloat(document.getElementById("caixaInicial").value)||0;
-  dados.financeiro.caixa=inicial;
-  dados.financeiro.saldo=inicial;
-  salvar();
-  atualizarFinanceiro();
-  alert("💵 Caixa inicial definido!");
-}
-
-// Atualizar financeiro
-function atualizarFinanceiro(){
-  document.getElementById("finEntradas").innerText=dados.financeiro.entradas;
-  document.getElementById("finSaidas").innerText=dados.financeiro.saidas;
-  document.getElementById("finSaldo").innerText=dados.financeiro.saldo;
-}
-
-// Inicialização
-atualizarSelect();
-atualizarFinanceiro();
-</script>
-
-</body>
-</html>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 
   <style>
@@ -189,122 +22,85 @@ atualizarFinanceiro();
       max-width:1200px;
     }
     .chart { width:100%; height:400px; }
-    select { margin:15px auto; display:block; padding:10px; border-radius:6px; border:none; background:#2c2c2c; color:white; }
   </style>
 </head>
 <body>
 
 <header>📊 DashControl Business - Dashboard</header>
 
-<!-- Seleção do negócio -->
-<h2>Escolha o negócio</h2>
-<select id="tipoNegocio" onchange="atualizarDashboard()">
-  <option value="">-- Selecione --</option>
-  <option value="delivery">🚚 Delivery</option>
-  <option value="salao">💇‍♀️ Salão</option>
-  <option value="ecommerce">🛒 E-commerce</option>
-  <option value="academia">🥋 Academia</option>
-</select>
-
-<!-- Área de gráficos -->
-<div id="graficos" style="display:none;">
-  <div class="chart-card"><div id="chartVendas" class="chart"></div></div>
-  <div class="chart-card"><div id="chartEstoque" class="chart"></div></div>
-  <div class="chart-card"><div id="chartFinanceiro" class="chart"></div></div>
-  <div class="chart-card"><div id="chartPagamentos" class="chart"></div></div>
-  <div class="chart-card"><div id="chartLinha" class="chart"></div></div>
-</div>
+<div class="chart-card"><div id="chartVendas" class="chart"></div></div>
+<div class="chart-card"><div id="chartEstoque" class="chart"></div></div>
+<div class="chart-card"><div id="chartFinanceiro" class="chart"></div></div>
+<div class="chart-card"><div id="chartPagamentos" class="chart"></div></div>
+<div class="chart-card"><div id="chartLinha" class="chart"></div></div>
 
 <script>
-let dados = JSON.parse(localStorage.getItem("dashBusiness")) || {delivery:[], salao:[], ecommerce:[], academia:[]};
+let dados = JSON.parse(localStorage.getItem("dashBusiness")) || {produtos:[], vendas:[], financeiro:{caixa:0, entradas:0, saidas:0, saldo:0}};
 
-function atualizarDashboard(){
-  let negocio=document.getElementById("tipoNegocio").value;
-  if(!negocio){ document.getElementById("graficos").style.display="none"; return; }
-  let registros=dados[negocio];
-  if(!registros || registros.length===0){ alert("Nenhum dado encontrado para este negócio."); return; }
-  document.getElementById("graficos").style.display="block";
+// 🔹 Gráfico Vendas por Produto
+let vendas=dados.vendas;
+let produtosVendidos={};
+vendas.forEach(v=>{ produtosVendidos[v.produto]=(produtosVendidos[v.produto]||0)+v.valor; });
 
-  // 🔹 Clientes
-  let clientes=registros.filter(r=>r.tipo==="cliente").map(c=>({
-    servico: c.servico || "N/D",
-    valor: parseFloat(c.valor)||0,
-    pagamento: c.pagamento || "Não informado",
-    data: c.data || "Sem data"
-  }));
+let chartVendas=echarts.init(document.getElementById('chartVendas'));
+chartVendas.setOption({
+  title:{text:"🛒 Vendas por Produto/Serviço", textStyle:{color:'#d4af37'}},
+  xAxis:{type:'category', data:Object.keys(produtosVendidos), axisLabel:{color:'#fff'}},
+  yAxis:{type:'value', axisLabel:{color:'#fff'}},
+  series:[{data:Object.values(produtosVendidos), type:'bar',
+    itemStyle:{color:'#8e44ad', shadowBlur:10, shadowColor:'#000'},
+    label:{show:true, color:'#fff'}
+  }]
+});
 
-  // Gráfico Vendas
-  let chartVendas=echarts.init(document.getElementById('chartVendas'));
-  chartVendas.setOption({
-    title:{text:"📊 Vendas / Serviços", textStyle:{color:'#d4af37'}},
-    tooltip:{trigger:'axis'},
-    xAxis:{type:'category', data:clientes.map(c=>c.servico), axisLabel:{color:'#fff'}},
-    yAxis:{type:'value', axisLabel:{color:'#fff'}},
-    series:[{data:clientes.map(c=>c.valor), type:'bar',
-      itemStyle:{color:'#8e44ad', shadowBlur:10, shadowColor:'#000'},
-      label:{show:true, color:'#fff'}
-    }]
-  });
+// 🔹 Estoque Atual
+let chartEstoque=echarts.init(document.getElementById('chartEstoque'));
+chartEstoque.setOption({
+  title:{text:"📦 Estoque Atual", textStyle:{color:'#d4af37'}},
+  xAxis:{type:'category', data:dados.produtos.map(p=>p.nome), axisLabel:{color:'#fff'}},
+  yAxis:{type:'value', axisLabel:{color:'#fff'}},
+  series:[{data:dados.produtos.map(p=>p.qtd||0), type:'bar', itemStyle:{color:'#1abc9c'}, label:{show:true, color:'#fff'}}]
+});
 
-  // 🔹 Estoque
-  let estoque=registros.filter(r=>r.tipo==="estoque");
-  let chartEstoque=echarts.init(document.getElementById('chartEstoque'));
-  chartEstoque.setOption({
-    title:{text:"📦 Estoque Atual", textStyle:{color:'#d4af37'}},
-    xAxis:{type:'category', data:estoque.map(e=>e.produto), axisLabel:{color:'#fff'}},
-    yAxis:{type:'value', axisLabel:{color:'#fff'}},
-    series:[{data:estoque.map(e=>e.quantidade), type:'bar',
-      itemStyle:{color:'#1abc9c'}, label:{show:true, color:'#fff'}
-    }]
-  });
+// 🔹 Financeiro (Entradas x Saídas)
+let chartFinanceiro=echarts.init(document.getElementById('chartFinanceiro'));
+chartFinanceiro.setOption({
+  title:{text:"💰 Entradas x Saídas", textStyle:{color:'#d4af37'}},
+  series:[{type:'pie', radius:['40%','70%'],
+    data:[
+      {name:"Entradas",value:dados.financeiro.entradas},
+      {name:"Saídas",value:dados.financeiro.saidas}
+    ],
+    itemStyle:{shadowBlur:15, shadowColor:'#000'},
+    label:{color:'#fff'}
+  }]
+});
 
-  // 🔹 Financeiro (Entradas x Saídas)
-  let entradas=clientes.reduce((s,c)=>s+c.valor,0);
-  let caixaIniciais=registros.filter(r=>r.tipo==="caixa").reduce((s,c)=>s+(parseFloat(c.inicial)||0),0);
-  let saidas=0; // futuras despesas
-  let chartFinanceiro=echarts.init(document.getElementById('chartFinanceiro'));
-  chartFinanceiro.setOption({
-    title:{text:"💰 Financeiro (Entradas + Caixa)", textStyle:{color:'#d4af37'}},
-    legend:{textStyle:{color:'#fff'}},
-    series:[{type:'pie', radius:['40%','70%'],
-      data:[
-        {name:"Entradas (Clientes)", value:entradas},
-        {name:"Caixa Inicial", value:caixaIniciais},
-        {name:"Saídas", value:saidas}
-      ],
-      itemStyle:{shadowBlur:15, shadowColor:'#000'},
-      label:{color:'#fff'}
-    }]
-  });
+// 🔹 Formas de Pagamento
+let formas={};
+vendas.forEach(v=>{ formas[v.pagamento]=(formas[v.pagamento]||0)+v.valor; });
+let chartPagamentos=echarts.init(document.getElementById('chartPagamentos'));
+chartPagamentos.setOption({
+  title:{text:"💳 Formas de Pagamento", textStyle:{color:'#d4af37'}},
+  series:[{type:'pie', radius:['40%','70%'],
+    data:Object.keys(formas).map(f=>({name:f,value:formas[f]})),
+    itemStyle:{shadowBlur:15, shadowColor:'#000'},
+    label:{color:'#fff'}
+  }]
+});
 
-  // 🔹 Formas de Pagamento
-  let formas={};
-  clientes.forEach(c=>{ formas[c.pagamento]=(formas[c.pagamento]||0)+c.valor; });
-  let chartPagamentos=echarts.init(document.getElementById('chartPagamentos'));
-  chartPagamentos.setOption({
-    title:{text:"💳 Formas de Pagamento", textStyle:{color:'#d4af37'}},
-    tooltip:{trigger:'item'},
-    legend:{textStyle:{color:'#fff'}},
-    series:[{type:'pie', radius:['40%','70%'],
-      data:Object.keys(formas).map(f=>({name:f,value:formas[f]})),
-      itemStyle:{shadowBlur:15, shadowColor:'#000'},
-      label:{color:'#fff'}
-    }]
-  });
-
-  // 🔹 Receita no Tempo
-  let porData={};
-  clientes.forEach(c=>{ porData[c.data]=(porData[c.data]||0)+c.valor; });
-  let chartLinha=echarts.init(document.getElementById('chartLinha'));
-  chartLinha.setOption({
-    title:{text:"📈 Receita ao Longo do Tempo", textStyle:{color:'#d4af37'}},
-    xAxis:{type:'category', data:Object.keys(porData), axisLabel:{color:'#fff'}},
-    yAxis:{type:'value', axisLabel:{color:'#fff'}},
-    series:[{data:Object.values(porData), type:'line', smooth:true,
-      itemStyle:{color:'#1abc9c'}, areaStyle:{color:'rgba(26,188,156,0.4)'}
-    }]
-  });
-}
+// 🔹 Receita no Tempo
+let porData={};
+vendas.forEach(v=>{ porData[v.data]=(porData[v.data]||0)+v.valor; });
+let chartLinha=echarts.init(document.getElementById('chartLinha'));
+chartLinha.setOption({
+  title:{text:"📈 Receita ao Longo do Tempo", textStyle:{color:'#d4af37'}},
+  xAxis:{type:'category', data:Object.keys(porData), axisLabel:{color:'#fff'}},
+  yAxis:{type:'value', axisLabel:{color:'#fff'}},
+  series:[{data:Object.values(porData), type:'line', smooth:true,
+    itemStyle:{color:'#e74c3c'}, areaStyle:{color:'rgba(231,76,60,0.4)'}
+  }]
+});
 </script>
 
 </body>
