@@ -18,13 +18,15 @@
     .row { display:flex; flex-wrap:wrap; gap:15px; }
     .col { flex:1; min-width:200px; }
     .hidden { display:none; }
+    .list-item { display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid #2c2c2c; }
+    .list-item:last-child { border-bottom: none; }
+    .list-container { margin-top:15px; padding:10px; background:#2c2c2c; border-radius:8px; }
   </style>
 </head>
 <body>
 
 <header>⚙️ DashControl Business - Inserção de Dados</header>
 
-<!-- Sessão Vendas -->
 <section id="secVenda">
   <h2>🛒 Registrar Venda</h2>
   <label>Produto/Serviço:</label>
@@ -54,7 +56,6 @@
   </div>
 </section>
 
-<!-- Sessão Estoque/Serviços -->
 <section>
   <h2>📦 Cadastro de Produtos/Serviços</h2>
   <label>Nome:</label>
@@ -69,9 +70,13 @@
   <div class="actions">
     <button onclick="adicionarEstoque()">➕ Adicionar</button>
   </div>
+  
+  <div class="list-container">
+    <h3>Itens Cadastrados:</h3>
+    <div id="listaEstoque"></div>
+  </div>
 </section>
 
-<!-- Sessão Financeiro -->
 <section>
   <h2>💰 Financeiro</h2>
   <label>Caixa Inicial (R$):</label>
@@ -82,131 +87,227 @@
   </div>
 
   <div class="row">
-    <div class="col"><strong>Entradas:</strong> <span id="finEntradas">0</span></div>
-    <div class="col"><strong>Saídas:</strong> <span id="finSaidas">0</span></div>
-    <div class="col"><strong>Saldo:</strong> <span id="finSaldo">0</span></div>
+    <div class="col"><strong>Entradas:</strong> R$ <span id="finEntradas">0.00</span></div>
+    <div class="col"><strong>Saídas:</strong> R$ <span id="finSaidas">0.00</span></div>
+    <div class="col"><strong>Saldo:</strong> R$ <span id="finSaldo">0.00</span></div>
   </div>
 </section>
 
+<section>
+  <h2>📊 Relatórios</h2>
+  <label>Filtrar por data:</label>
+  <input type="date" id="filtroDataRelatorio">
+  <div class="actions">
+    <button onclick="gerarRelatorio()">Gerar Relatório</button>
+  </div>
+  <div id="relatorioResultado" class="list-container"></div>
+</section>
+
 <script>
-let dados = JSON.parse(localStorage.getItem("dashBusiness")) || {vendas:[], estoque:[], financeiro:[]};
+const appState = {
+  data: { vendas: [], estoque: [], financeiro: [] },
 
-// Atualiza o select de produtos
-function atualizarSelect(){
-  let sel=document.getElementById("vendaProduto");
-  sel.innerHTML="";
-  dados.estoque.forEach((p,i)=>{
-    let opt=document.createElement("option");
-    opt.value=i;
-    opt.text=`${p.nome} - R$${p.valor}`;
-    sel.appendChild(opt);
-  });
-  if(dados.estoque.length>0) atualizarValorVenda();
+  load() {
+    this.data = JSON.parse(localStorage.getItem("dashBusiness")) || { vendas: [], estoque: [], financeiro: [] };
+  },
+
+  save() {
+    localStorage.setItem("dashBusiness", JSON.stringify(this.data));
+    this.updateUI();
+  },
+  
+  updateUI() {
+    this.atualizarSelect();
+    this.atualizarEstoqueUI();
+    this.atualizarFinanceiroUI();
+  },
+
+  // Novo método para atualizar o valor da venda
+  atualizarValorVenda() {
+    let i = document.getElementById("vendaProduto").value;
+    if (i !== "") {
+      document.getElementById("vendaValor").value = this.data.estoque[i].valor.toFixed(2);
+    }
+  },
+
+  atualizarSelect() {
+    let sel = document.getElementById("vendaProduto");
+    sel.innerHTML = "";
+    this.data.estoque.forEach((p, i) => {
+      let opt = document.createElement("option");
+      opt.value = i;
+      opt.text = `${p.nome} - R$${p.valor.toFixed(2)}` + (p.quantidade !== null ? ` (Qtd: ${p.quantidade})` : ` (Serviço)`);
+      sel.appendChild(opt);
+    });
+    if (this.data.estoque.length > 0) {
+      this.atualizarValorVenda();
+    } else {
+      document.getElementById("vendaValor").value = "";
+    }
+  },
+
+  atualizarEstoqueUI() {
+    const lista = document.getElementById("listaEstoque");
+    lista.innerHTML = "";
+    if (this.data.estoque.length === 0) {
+      lista.innerHTML = "<p style='text-align:center;'>Nenhum item cadastrado.</p>";
+      return;
+    }
+    this.data.estoque.forEach((item, index) => {
+      const div = document.createElement("div");
+      div.className = "list-item";
+      div.innerHTML = `
+        <span>${item.nome} - R$${item.valor.toFixed(2)} (${item.quantidade !== null ? `Qtd: ${item.quantidade}` : 'Serviço'})</span>
+        <button onclick="appState.removerItem('estoque', ${index})">Remover</button>
+      `;
+      lista.appendChild(div);
+    });
+  },
+
+  atualizarFinanceiroUI() {
+    let entradas = this.data.financeiro.reduce((s, f) => s + (f.entrada || 0), 0);
+    let saidas = this.data.financeiro.reduce((s, f) => s + (f.saida || 0), 0);
+    
+    let saldo = entradas - saidas;
+    
+    document.getElementById("finEntradas").innerText = entradas.toFixed(2);
+    document.getElementById("finSaidas").innerText = saidas.toFixed(2);
+    document.getElementById("finSaldo").innerText = saldo.toFixed(2);
+  },
+
+  removerItem(categoria, index) {
+    if (confirm(`Tem certeza que deseja remover este item?`)) {
+      this.data[categoria].splice(index, 1);
+      this.save();
+    }
+  }
+};
+
+function toggleTroco() {
+  let pagamento = document.getElementById("vendaPagamento").value;
+  document.getElementById("trocoArea").classList.toggle("hidden", pagamento !== "Dinheiro");
 }
 
-// Atualiza valor ao trocar produto
-function atualizarValorVenda(){
-  let i=document.getElementById("vendaProduto").value;
-  if(i!=="") document.getElementById("vendaValor").value=dados.estoque[i].valor;
-}
-document.getElementById("vendaProduto").addEventListener("change", atualizarValorVenda);
+function registrarVenda() {
+  let i = document.getElementById("vendaProduto").value;
+  if (i === "") { alert("⚠️ Selecione um produto!"); return; }
+  
+  let produto = appState.data.estoque[i];
+  let valor = parseFloat(document.getElementById("vendaValor").value) || 0;
+  let pagamento = document.getElementById("vendaPagamento").value;
+  let data = document.getElementById("vendaData").value || new Date().toISOString().split('T')[0];
 
-// Exibir campo troco
-function toggleTroco(){
-  let pagamento=document.getElementById("vendaPagamento").value;
-  document.getElementById("trocoArea").classList.toggle("hidden", pagamento!=="Dinheiro");
-}
-
-// Registrar venda
-function registrarVenda(){
-  let i=document.getElementById("vendaProduto").value;
-  if(i===""){ alert("⚠️ Selecione um produto!"); return; }
-  let produto=dados.estoque[i];
-  let valor=parseFloat(document.getElementById("vendaValor").value)||0;
-  let pagamento=document.getElementById("vendaPagamento").value;
-  let data=document.getElementById("vendaData").value || new Date().toLocaleDateString();
-
-  let troco=0;
-  if(pagamento==="Dinheiro"){
-    let recebido=parseFloat(document.getElementById("valorRecebido").value)||0;
-    if(recebido<valor){ alert("⚠️ Valor recebido insuficiente!"); return; }
-    troco=recebido-valor;
+  if (valor <= 0) {
+      alert("⚠️ O valor da venda deve ser maior que zero!");
+      return;
+  }
+  
+  let troco = 0;
+  if (pagamento === "Dinheiro") {
+    let recebido = parseFloat(document.getElementById("valorRecebido").value) || 0;
+    if (recebido < valor) { alert("⚠️ Valor recebido insuficiente!"); return; }
+    troco = recebido - valor;
   }
 
-  // baixa estoque se for produto
-  if(produto.quantidade !== null && produto.quantidade > 0){ 
-    produto.quantidade--; 
+  if (produto.quantidade !== null && produto.quantidade <= 0) {
+      alert("⚠️ Produto fora de estoque!");
+      return;
   }
 
-  // salvar venda
-  dados.vendas.push({produto:produto.nome, valor, pagamento, troco, data});
+  if (produto.quantidade !== null) {
+    produto.quantidade--;
+  }
 
-  // atualizar financeiro
-  let entradas=valor;
-  let saidas=troco;
-  let saldoAtual=(dados.financeiro.length ? dados.financeiro[dados.financeiro.length-1].saldo : 0) + entradas - saidas;
-  dados.financeiro.push({entrada:entradas, saida:saidas, saldo:saldoAtual, data});
+  appState.data.vendas.push({ produto: produto.nome, valor, pagamento, troco, data });
+  appState.data.financeiro.push({ entrada: valor, saida: troco, data });
 
-  salvar();
+  appState.save();
   alert("✅ Venda registrada!");
-  document.getElementById("valorRecebido").value="";
+  document.getElementById("valorRecebido").value = "";
+  
+  document.getElementById("relatorioResultado").innerHTML = "";
 }
 
-// Adicionar estoque
-function adicionarEstoque(){
-  let nome=document.getElementById("estoqueNome").value.trim();
-  let valor=parseFloat(document.getElementById("estoqueValor").value);
-  let qtdInput=document.getElementById("estoqueQtd").value;
-  if(!nome || isNaN(valor)){ 
-    alert("⚠️ Preencha pelo menos nome e valor!");
-    return; 
+function adicionarEstoque() {
+  let nome = document.getElementById("estoqueNome").value.trim();
+  let valor = parseFloat(document.getElementById("estoqueValor").value);
+  let qtdInput = document.getElementById("estoqueQtd").value;
+  
+  if (!nome || isNaN(valor) || valor < 0) {
+    alert("⚠️ Preencha nome e valor unitário com valores válidos!");
+    return;
   }
   let quantidade = qtdInput === "" ? null : parseInt(qtdInput);
+  if (quantidade !== null && (isNaN(quantidade) || quantidade < 0)) {
+    alert("⚠️ A quantidade deve ser um número inteiro e não negativo!");
+    return;
+  }
 
-  dados.estoque.push({nome, valor, quantidade});
-  salvar();
+  appState.data.estoque.push({ nome, valor, quantidade });
+  appState.save();
 
-  // limpa formulário
-  document.getElementById("estoqueNome").value="";
-  document.getElementById("estoqueValor").value="";
-  document.getElementById("estoqueQtd").value="";
+  document.getElementById("estoqueNome").value = "";
+  document.getElementById("estoqueValor").value = "";
+  document.getElementById("estoqueQtd").value = "";
 
-  atualizarSelect();
   alert("✅ Produto/Serviço cadastrado!");
 }
 
-// Definir caixa inicial
-function definirCaixa(){
-  let inicial=parseFloat(document.getElementById("caixaInicial").value)||0;
-  dados.financeiro.push({entrada:inicial, saida:0, saldo:inicial, data:new Date().toLocaleDateString()});
-  salvar();
-  atualizarFinanceiroUI();
+function definirCaixa() {
+  let inicial = parseFloat(document.getElementById("caixaInicial").value) || 0;
+  if (isNaN(inicial) || inicial < 0) {
+    alert("⚠️ O valor inicial deve ser um número válido e não negativo!");
+    return;
+  }
+  
+  appState.data.financeiro = [];
+  appState.data.financeiro.push({ entrada: inicial, saida: 0, data: new Date().toISOString().split('T')[0] });
+  appState.save();
+  
   alert("✅ Caixa inicial definido!");
 }
 
-// Atualizar UI financeiro
-function atualizarFinanceiroUI(){
-  let entradas=dados.financeiro.reduce((s,f)=>s+(f.entrada||0),0);
-  let saidas=dados.financeiro.reduce((s,f)=>s+(f.saida||0),0);
-  let saldo=dados.financeiro.length?dados.financeiro[dados.financeiro.length-1].saldo:0;
-  document.getElementById("finEntradas").innerText=entradas;
-  document.getElementById("finSaidas").innerText=saidas;
-  document.getElementById("finSaldo").innerText=saldo;
-}
+function gerarRelatorio() {
+  const dataFiltro = document.getElementById("filtroDataRelatorio").value;
+  const vendasFiltradas = appState.data.vendas.filter(venda => venda.data === dataFiltro);
+  const resultado = document.getElementById("relatorioResultado");
+  resultado.innerHTML = "";
 
-// Salvar no LocalStorage
-function salvar(){ 
-  localStorage.setItem("dashBusiness", JSON.stringify(dados)); 
-  console.log("💾 Dados salvos:", dados); // debug
-  atualizarFinanceiroUI(); 
-  atualizarSelect(); 
+  if (!dataFiltro) {
+    resultado.innerHTML = "<p style='text-align:center;'>Selecione uma data para gerar o relatório.</p>";
+    return;
+  }
+
+  if (vendasFiltradas.length === 0) {
+    resultado.innerHTML = "<p style='text-align:center;'>Nenhuma venda encontrada para a data selecionada.</p>";
+    return;
+  }
+
+  let totalVendas = 0;
+  vendasFiltradas.forEach(v => totalVendas += v.valor);
+
+  const relatorioHTML = `
+    <h3>Resumo do dia ${dataFiltro}</h3>
+    <p><strong>Total de Vendas:</strong> R$${totalVendas.toFixed(2)}</p>
+    <p><strong>Número de Vendas:</strong> ${vendasFiltradas.length}</p>
+    <h4>Detalhes das Vendas:</h4>
+    ${vendasFiltradas.map(venda => `
+      <div class="list-item">
+        <span>${venda.produto} - R$${venda.valor.toFixed(2)} (${venda.pagamento})</span>
+      </div>
+    `).join('')}
+  `;
+  resultado.innerHTML = relatorioHTML;
 }
 
 // Inicialização
-window.onload=()=>{
-  document.getElementById("vendaData").value=new Date().toISOString().split("T")[0];
-  atualizarSelect();
-  atualizarFinanceiroUI();
+window.onload = () => {
+  appState.load();
+  document.getElementById("vendaData").value = new Date().toISOString().split("T")[0];
+  appState.updateUI();
+
+  // Adiciona o event listener aqui
+  document.getElementById("vendaProduto").addEventListener("change", appState.atualizarValorVenda.bind(appState));
 };
 </script>
 
