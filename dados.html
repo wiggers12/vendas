@@ -119,7 +119,7 @@ function atualizarNegocio(){
   }
 }
 
-// Registrar Cliente (gera venda, desconta estoque, atualiza financeiro)
+// Registrar Cliente (gera venda + financeiro)
 function registrarCliente(){
   let nome=document.getElementById("clienteNome").value;
   let servico=document.getElementById("clienteServico").value;
@@ -129,18 +129,27 @@ function registrarCliente(){
   if(!nome || !servico || !valor){ alert("Preencha todos os campos do cliente!"); return; }
 
   // desconto do estoque
-  let item=dados[negocioAtual].find(p=>p.produto===servico);
+  let item=dados[negocioAtual].find(p=>p.produto===servico && p.tipo==="estoque");
   if(item){
     if(item.quantidade>0){ item.quantidade--; }
     else{ alert("❌ Estoque insuficiente!"); return; }
   }
 
-  // salvar venda no array
+  // salvar venda
   let registro={tipo:"cliente", nome, servico, valor, pagamento, data:new Date().toLocaleDateString()};
   dados[negocioAtual].push(registro);
 
-  // atualizar financeiro
-  atualizarFinanceiro(valor,0);
+  // atualizar financeiro e salvar registro
+  let saldoAtual=atualizarFinanceiro(valor,0);
+  let registroFinanceiro={
+    tipo:"financeiro",
+    entrada:valor,
+    saida:0,
+    saldo:saldoAtual,
+    pagamento,
+    data:new Date().toLocaleDateString()
+  };
+  dados[negocioAtual].push(registroFinanceiro);
 
   salvarLocal();
   alert("✅ Cliente registrado com sucesso!");
@@ -179,9 +188,23 @@ function removerEstoque(){
 // Financeiro
 function atualizarCaixa(){
   let inicial=parseFloat(document.getElementById("caixaInicial").value)||0;
-  dados[negocioAtual].push({tipo:"caixa", inicial, data:new Date().toLocaleDateString()});
+  let registroCaixa={tipo:"caixa", inicial, data:new Date().toLocaleDateString()};
+  dados[negocioAtual].push(registroCaixa);
+
+  let registroFinanceiro={
+    tipo:"financeiro",
+    entrada:inicial,
+    saida:0,
+    saldo:inicial,
+    pagamento:"Caixa Inicial",
+    data:new Date().toLocaleDateString()
+  };
+  dados[negocioAtual].push(registroFinanceiro);
+
   salvarLocal();
   alert("✅ Caixa inicial atualizado!");
+  document.getElementById("finSaldo").innerText=inicial;
+  document.getElementById("finEntradas").innerText=inicial;
 }
 function atualizarFinanceiro(entrada,saida){
   let entradas=entrada||0;
@@ -191,6 +214,7 @@ function atualizarFinanceiro(entrada,saida){
   document.getElementById("finEntradas").innerText=(parseFloat(document.getElementById("finEntradas").innerText)||0)+entradas;
   document.getElementById("finSaidas").innerText=(parseFloat(document.getElementById("finSaidas").innerText)||0)+saidas;
   document.getElementById("finSaldo").innerText=saldoAtual;
+  return saldoAtual;
 }
 
 // Salvar LocalStorage
