@@ -3,43 +3,39 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>App Premium V2</title>
+  <title>DashControl</title>
 
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
 
   <style>
-    /* --------- Base --------- */
-    body { margin:0; font-family: 'Segoe UI', Arial, sans-serif; background:#0d0d0d; color:white; text-align:center; }
-    header { background:linear-gradient(90deg,#8e44ad,#b8860b); padding:15px; font-size:22px; font-weight:bold; letter-spacing:1px; }
-    nav { display:flex; flex-wrap:wrap; justify-content:center; gap:10px; background:#1e1e1e; padding:10px; }
+    body { margin:0; font-family:'Segoe UI', Arial, sans-serif; background:#0d0d0d; color:white; text-align:center; }
+    header { background:linear-gradient(90deg,#8e44ad,#b8860b); padding:15px; font-size:22px; font-weight:bold; }
+    nav { display:flex; justify-content:center; gap:10px; background:#1e1e1e; padding:10px; flex-wrap:wrap; }
     nav button { background:#8e44ad; border:none; padding:10px 15px; color:white; border-radius:8px; cursor:pointer; min-width:120px; font-weight:bold; }
     nav button:hover { background:#b8860b; transition:0.3s; }
     .page { display:none; padding:20px; max-width:1000px; margin:auto; }
     h2 { color:#b8860b; margin-bottom:20px; }
 
-    /* --------- Splash --------- */
+    /* Splash */
     .splash { position:fixed; top:0; left:0; width:100%; height:100%; 
-      background:linear-gradient(135deg,#0d0d0d,#8e44ad); 
+      background:linear-gradient(135deg,#0d0d0d,#8e44ad,#b8860b); 
       display:flex; align-items:center; justify-content:center; flex-direction:column; 
-      color:#fff; font-size:26px; font-weight:bold; z-index:9999; text-align:center; }
+      color:#fff; font-size:32px; font-weight:bold; z-index:9999; text-align:center; animation:fadeIn 1.5s; }
     .splash small { color:#ddd; margin-top:10px; font-size:16px; }
+    @keyframes fadeIn { from{opacity:0} to{opacity:1} }
 
-    /* --------- Catálogo --------- */
-    .produtos { display:grid; grid-template-columns:repeat(auto-fit, minmax(220px,1fr)); gap:20px; }
-    .produto { background:#1a1a1a; padding:15px; border-radius:12px; box-shadow:0 0 10px rgba(0,0,0,0.6); }
-    .produto img { width:100%; border-radius:10px; }
-    .produto h3 { margin:10px 0; color:#fff; }
-    .produto p { margin:5px 0; color:#b8860b; font-weight:bold; }
-    .produto button { background:#25d366; border:none; padding:10px; border-radius:5px; color:white; cursor:pointer; width:100%; font-weight:bold; }
-
-    /* --------- Formulários --------- */
-    input, select { padding:12px; margin:8px auto; border-radius:8px; border:none; width:90%; max-width:350px; display:block; background:#2c2c2c; color:white; }
+    /* Formulário Admin */
+    input { padding:12px; margin:8px auto; border-radius:8px; border:none; width:90%; max-width:350px; display:block; background:#2c2c2c; color:white; }
     button.action { background:#8e44ad; padding:12px 20px; margin-top:10px; width:90%; max-width:360px; border:none; border-radius:8px; color:white; font-weight:bold; cursor:pointer; }
     button.action:hover { background:#b8860b; }
 
-    /* --------- Dashboard --------- */
+    /* Dashboard */
+    .kpis { display:grid; grid-template-columns:repeat(auto-fit, minmax(180px,1fr)); gap:15px; margin:20px 0; }
+    .kpi { background:#1a1a1a; border-radius:12px; padding:20px; }
+    .kpi h3 { margin:0; font-size:16px; color:#b8860b; }
+    .kpi p { font-size:22px; font-weight:bold; margin:5px 0 0; }
     .card { background:#1a1a1a; border-radius:12px; padding:20px; margin:20px auto; max-width:900px; box-shadow:0 0 12px rgba(0,0,0,0.5); }
     canvas { width:100% !important; height:320px !important; }
   </style>
@@ -48,164 +44,114 @@
 
   <!-- Splash -->
   <div id="splash" class="splash">
-    🚀 Seu negócio digital começa aqui <br>
-    <small>👉 Coloque o nome da sua empresa</small>
+    🚀 DashControl <br>
+    <small>Controle total em suas mãos</small>
   </div>
 
   <!-- Cabeçalho -->
-  <header>✨ App Premium V2 ✨</header>
+  <header>📊 DashControl</header>
   <nav>
-    <button onclick="showPage('catalogo')">🛒 Catálogo</button>
-    <button onclick="showPage('cliente')">👤 Cliente</button>
-    <button onclick="showPage('admin')">⚙️ Empresário</button>
-    <button onclick="showPage('pagamento')">💳 Pagamentos</button>
-    <button onclick="showPage('dashboard')">📊 Dashboard</button>
+    <button onclick="showPage('admin')">⚙️ Inserir Dados</button>
+    <button onclick="showPage('dashboard')">📈 Dashboard</button>
   </nav>
-
-  <!-- Catálogo -->
-  <div id="catalogo" class="page">
-    <h2>Catálogo de Produtos</h2>
-    <div id="listaProdutos" class="produtos"></div>
-  </div>
-
-  <!-- Cliente -->
-  <div id="cliente" class="page">
-    <h2>Cadastre seus clientes</h2>
-    <input type="text" id="nomeCliente" placeholder="Nome completo">
-    <input type="text" id="whatsCliente" placeholder="WhatsApp">
-    <button class="action" onclick="cadastrarCliente()">Cadastrar</button>
-    <p id="msgCliente"></p>
-  </div>
 
   <!-- Admin -->
   <div id="admin" class="page">
-    <h2>Painel do Empresário</h2>
-    <p>📦 Adicione novos produtos diretamente ao catálogo:</p>
+    <h2>Inserir Dados</h2>
     <input type="text" id="nomeProduto" placeholder="Nome do produto">
-    <input type="number" id="precoProduto" placeholder="Preço (R$)">
-    <input type="text" id="fotoProduto" placeholder="URL da foto do produto">
-    <button class="action" onclick="adicionarProduto()">Adicionar Produto</button>
+    <input type="number" id="estoqueProduto" placeholder="Estoque disponível">
+    <input type="number" id="vendasProduto" placeholder="Vendas realizadas">
+    <input type="number" id="precoProduto" placeholder="Preço unitário (R$)">
+    <button class="action" onclick="adicionarProduto()">➕ Adicionar Produto</button>
+    <button class="action" onclick="limparDados()">🗑️ Limpar Dados</button>
     <p id="msgAdmin"></p>
-  </div>
-
-  <!-- Pagamentos -->
-  <div id="pagamento" class="page">
-    <h2>Área de Pagamentos (Simulação)</h2>
-    <p>Selecione a forma de pagamento:</p>
-    <select id="formaPagamento">
-      <option value="pix">Pix</option>
-      <option value="cartao">Cartão de Crédito</option>
-      <option value="boleto">Boleto</option>
-    </select>
-    <button class="action" onclick="simularPagamento()">Pagar Agora</button>
-    <p id="msgPagamento"></p>
   </div>
 
   <!-- Dashboard -->
   <div id="dashboard" class="page">
     <h2>Dashboard Premium</h2>
+    <div class="kpis">
+      <div class="kpi"><h3>💰 Faturamento</h3><p id="kpiFaturamento">R$ 0</p></div>
+      <div class="kpi"><h3>🛒 Vendas</h3><p id="kpiVendas">0</p></div>
+      <div class="kpi"><h3>📦 Estoque</h3><p id="kpiEstoque">0</p></div>
+      <div class="kpi"><h3>🛍️ Produtos</h3><p id="kpiProdutos">0</p></div>
+    </div>
     <div class="card"><canvas id="graficoVendas"></canvas></div>
-    <div class="card"><canvas id="graficoProdutos"></canvas></div>
+    <div class="card"><canvas id="graficoReceita"></canvas></div>
     <div class="card"><canvas id="graficoLinha"></canvas></div>
     <div class="card"><canvas id="graficoComparativo"></canvas></div>
   </div>
 
 <script>
-  // -------- Splash --------
-  setTimeout(()=>{ document.getElementById('splash').style.display='none'; showPage('catalogo'); },2000);
+  // Splash
+  setTimeout(()=>{ document.getElementById('splash').style.display='none'; showPage('admin'); },2000);
 
-  // -------- Navegação --------
+  // Navegação
   function showPage(id){
     document.querySelectorAll('.page').forEach(p=>p.style.display='none');
     document.getElementById(id).style.display='block';
     if(id==='dashboard') atualizarDashboard();
   }
 
-  // -------- Produtos iniciais --------
-  let produtos = [
-    {nome:"Produto Premium 1", preco:150, foto:"https://via.placeholder.com/250x180.png?text=Produto+1"},
-    {nome:"Produto Premium 2", preco:200, foto:"https://via.placeholder.com/250x180.png?text=Produto+2"}
-  ];
+  // Dados
+  let produtos = JSON.parse(localStorage.getItem("dashProdutos")) || [];
 
-  function renderProdutos(){
-    let lista = document.getElementById("listaProdutos");
-    lista.innerHTML = "";
-    produtos.forEach(p=>{
-      lista.innerHTML += `
-        <div class="produto">
-          <img src="${p.foto}" alt="${p.nome}">
-          <h3>${p.nome}</h3>
-          <p>R$ ${p.preco},00</p>
-          <button onclick="pedidoWhats('${p.nome} - R$${p.preco},00')">Comprar Agora</button>
-        </div>`;
-    });
-  }
-  renderProdutos();
-
-  // -------- Cliente --------
-  function cadastrarCliente(){
-    let nome=document.getElementById('nomeCliente').value;
-    let whats=document.getElementById('whatsCliente').value;
-    localStorage.setItem('cliente',JSON.stringify({nome,whats}));
-    document.getElementById('msgCliente').innerText="✅ Cliente cadastrado!";
-  }
-
-  // -------- Admin --------
   function adicionarProduto(){
     let nome=document.getElementById('nomeProduto').value;
-    let preco=document.getElementById('precoProduto').value;
-    let foto=document.getElementById('fotoProduto').value || "https://via.placeholder.com/250x180.png?text=Produto";
-    produtos.push({nome,preco,foto});
-    renderProdutos();
-    document.getElementById('msgAdmin').innerText="Produto '"+nome+"' adicionado!";
+    let estoque=parseInt(document.getElementById('estoqueProduto').value)||0;
+    let vendas=parseInt(document.getElementById('vendasProduto').value)||0;
+    let preco=parseFloat(document.getElementById('precoProduto').value)||0;
+    if(!nome) return alert("Preencha o nome do produto!");
+
+    produtos.push({nome,estoque,vendas,preco, receita: preco*vendas, data: new Date().toLocaleDateString()});
+    localStorage.setItem("dashProdutos", JSON.stringify(produtos));
+    document.getElementById('msgAdmin').innerText="✅ Produto adicionado!";
   }
 
-  // -------- WhatsApp --------
-  function pedidoWhats(produto){
-    const cliente = JSON.parse(localStorage.getItem('cliente'))||{nome:'',whats:''};
-    let msg=`Olá, quero comprar: ${produto}\nCliente: ${cliente.nome}\nWhats: ${cliente.whats}`;
-    window.open(`https://wa.me/5551999999999?text=${encodeURIComponent(msg)}`,"_blank");
+  function limparDados(){
+    produtos=[]; localStorage.removeItem("dashProdutos");
+    document.getElementById('msgAdmin').innerText="🗑️ Dados apagados!";
   }
 
-  // -------- Pagamentos --------
-  function simularPagamento(){
-    let forma=document.getElementById('formaPagamento').value;
-    document.getElementById('msgPagamento').innerText="✅ Pagamento aprovado via "+forma.toUpperCase()+" (simulação)";
-  }
-
-  // -------- Dashboard --------
+  // Dashboard
   function atualizarDashboard(){
-    // Vendas por Produto
-    new Chart(document.getElementById('graficoVendas'), {
-      type:'bar',
-      data:{ labels:["Produto 1","Produto 2","Produto 3"], datasets:[{ label:"Vendas", data:[12,8,15], backgroundColor:["#b8860b","#8e44ad","#ff4500"] }] },
-      options:{ plugins:{ legend:{labels:{color:'#fff'}}, datalabels:{color:'#fff',anchor:'end',align:'top'}}, scales:{x:{ticks:{color:'#fff'}},y:{ticks:{color:'#fff'}}}},
-      plugins:[ChartDataLabels]
+    // KPIs
+    let faturamento=produtos.reduce((s,p)=>s+p.receita,0);
+    let vendas=produtos.reduce((s,p)=>s+p.vendas,0);
+    let estoque=produtos.reduce((s,p)=>s+p.estoque,0);
+
+    document.getElementById("kpiFaturamento").innerText="R$ "+faturamento.toFixed(2);
+    document.getElementById("kpiVendas").innerText=vendas;
+    document.getElementById("kpiEstoque").innerText=estoque;
+    document.getElementById("kpiProdutos").innerText=produtos.length;
+
+    // Config padrão
+    const configPadrao={plugins:{legend:{labels:{color:'#fff'}}, datalabels:{color:'#fff',anchor:'end',align:'top'}}, scales:{x:{ticks:{color:'#fff'}},y:{ticks:{color:'#fff'}}}};
+
+    // Gráfico Vendas
+    new Chart(document.getElementById("graficoVendas"), {
+      type:"bar", data:{labels:produtos.map(p=>p.nome), datasets:[{label:"Vendas", data:produtos.map(p=>p.vendas), backgroundColor:"#8e44ad"}]},
+      options:configPadrao, plugins:[ChartDataLabels]
     });
 
-    // Distribuição
-    new Chart(document.getElementById('graficoProdutos'), {
-      type:'doughnut',
-      data:{ labels:["Produto 1","Produto 2","Produto 3"], datasets:[{ data:[60,25,15], backgroundColor:["#b8860b","#8e44ad","#ff4500"] }] },
-      options:{ plugins:{ legend:{labels:{color:'#fff'}}}}, plugins:[ChartDataLabels]
+    // Receita por Produto
+    new Chart(document.getElementById("graficoReceita"), {
+      type:"doughnut", data:{labels:produtos.map(p=>p.nome), datasets:[{data:produtos.map(p=>p.receita), backgroundColor:["#b8860b","#8e44ad","#3498db","#e74c3c","#2ecc71"]}]},
+      options:{plugins:{legend:{labels:{color:'#fff'}}}}, plugins:[ChartDataLabels]
     });
 
-    // Evolução mensal
-    new Chart(document.getElementById('graficoLinha'), {
-      type:'line',
-      data:{ labels:["Jan","Fev","Mar","Abr","Mai","Jun"], datasets:[{ label:"Vendas", data:[120,135,160,145,175,190], borderColor:"#8e44ad", backgroundColor:"rgba(142,68,173,0.3)", fill:true, tension:0.3 }] },
-      options:{ plugins:{ legend:{labels:{color:'#fff'}}}, scales:{x:{ticks:{color:'#fff'}},y:{ticks:{color:'#fff'}}}}
+    // Linha evolução
+    new Chart(document.getElementById("graficoLinha"), {
+      type:"line", data:{labels:produtos.map(p=>p.data), datasets:[{label:"Receita", data:produtos.map(p=>p.receita), borderColor:"#b8860b", backgroundColor:"rgba(184,134,11,0.3)", fill:true, tension:0.3}]},
+      options:configPadrao
     });
 
     // Comparativo Estoque x Vendas
-    new Chart(document.getElementById('graficoComparativo'), {
-      type:'bar',
-      data:{ labels:["Produto 1","Produto 2","Produto 3"],
-        datasets:[
-          { label:"Estoque", data:[50,40,30], backgroundColor:"#b8860b" },
-          { label:"Vendas", data:[35,25,20], backgroundColor:"#8e44ad" }
-        ]},
-      options:{ plugins:{ legend:{labels:{color:'#fff'}}}, scales:{x:{ticks:{color:'#fff'}},y:{ticks:{color:'#fff'}}}}
+    new Chart(document.getElementById("graficoComparativo"), {
+      type:"bar", data:{labels:produtos.map(p=>p.nome), datasets:[
+        {label:"Estoque", data:produtos.map(p=>p.estoque), backgroundColor:"#3498db"},
+        {label:"Vendas", data:produtos.map(p=>p.vendas), backgroundColor:"#e74c3c"}
+      ]}, options:configPadrao
     });
   }
 </script>
