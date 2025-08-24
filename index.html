@@ -2,164 +2,147 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Dashboard GIGAS</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GIGAS - App de Vendas</title>
+
+  <!-- Manifest + Favicon -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#004aad">
+
+  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+
   <style>
-    body {
-      background-color: #121212;
-      color: white;
-      font-family: Arial, sans-serif;
-      margin: 20px;
-    }
-    .card {
-      background: #1e1e1e;
-      border-radius: 10px;
-      padding: 20px;
-      margin: 20px auto;
-      max-width: 800px;
-      box-shadow: 0 0 15px rgba(0,0,0,0.5);
-    }
-    h2 {
-      text-align: center;
-      margin-bottom: 10px;
-    }
-    input, button {
-      padding: 8px;
-      margin: 5px;
-      border-radius: 5px;
-      border: none;
-    }
-    button {
-      background: #2196f3;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #1976d2;
-    }
+    body { margin:0; font-family: Arial, sans-serif; background:#121212; color:white; }
+    header { background:#004aad; padding:15px; text-align:center; font-size:22px; font-weight:bold; }
+    nav { display:flex; justify-content:center; gap:10px; background:#1e1e1e; padding:10px; }
+    nav button { background:#004aad; border:none; padding:10px 15px; color:white; border-radius:5px; cursor:pointer; }
+    nav button:hover { background:#08306b; }
+    .page { display:none; padding:20px; }
+    h2 { color:#2196f3; }
+    .produto { background:#1e1e1e; padding:10px; border-radius:10px; margin:10px; text-align:center; }
+    .produto img { width:100%; max-width:200px; border-radius:10px; }
+    .produto h3 { margin:10px 0; }
+    .produto p { margin:5px 0; }
+    .produto button { background:#25d366; border:none; padding:10px; border-radius:5px; color:white; cursor:pointer; }
+    .card { background:#1e1e1e; border-radius:10px; padding:20px; margin:20px auto; max-width:800px; }
+    canvas { width:100% !important; height:300px !important; }
+    input, select { padding:8px; margin:5px; border-radius:5px; border:none; }
+    .splash { position:fixed; top:0; left:0; width:100%; height:100%; background:#004aad; display:flex; align-items:center; justify-content:center; flex-direction:column; color:white; font-size:24px; font-weight:bold; z-index:9999; }
   </style>
 </head>
 <body>
 
-  <h1 style="text-align:center">📊 Dashboard GIGAS</h1>
-
-  <!-- ÁREA DE ENTRADA DE DADOS -->
-  <div class="card">
-    <h2>🔧 Atualizar Estoque</h2>
-    <label>Produto:</label>
-    <select id="produtoEstoque">
-      <option>Água</option>
-      <option>GP</option>
-      <option>P13</option>
-      <option>P20</option>
-      <option>P45</option>
-      <option>P8</option>
-      <option>PB</option>
-    </select>
-    <label>Quantidade (+/-):</label>
-    <input type="number" id="qtdEstoque" value="0">
-    <button onclick="atualizarEstoque()">Atualizar</button>
+  <!-- Splash -->
+  <div id="splash" class="splash">
+    🚀 Bem-vindo ao GIGAS<br>
+    <small>Transforme seguidores em clientes agora mesmo!</small>
   </div>
 
-  <div class="card">
-    <h2>🚚 Registrar Entregas</h2>
-    <label>Nome do Entregador:</label>
-    <input type="text" id="entregador" placeholder="Ex: João">
-    <label>Quantidade Entregas:</label>
-    <input type="number" id="qtdEntrega" value="0">
-    <button onclick="registrarEntrega()">Registrar</button>
+  <!-- Cabeçalho -->
+  <header>📱 GIGAS - App de Vendas</header>
+  <nav>
+    <button onclick="showPage('catalogo')">🛒 Catálogo</button>
+    <button onclick="showPage('cliente')">👤 Cliente</button>
+    <button onclick="showPage('admin')">⚙️ Empresário</button>
+    <button onclick="showPage('dashboard')">📊 Dashboard</button>
+  </nav>
+
+  <!-- Catálogo -->
+  <div id="catalogo" class="page">
+    <h2>Catálogo de Produtos</h2>
+    <div class="produto">
+      <img src="https://via.placeholder.com/200x150.png?text=Água+20L" alt="Água">
+      <h3>Água Mineral 20L</h3>
+      <p>R$ 10,00</p>
+      <button onclick="pedidoWhats('Água Mineral 20L')">Comprar</button>
+    </div>
+    <div class="produto">
+      <img src="https://via.placeholder.com/200x150.png?text=Botijão+P13" alt="P13">
+      <h3>Botijão P13</h3>
+      <p>R$ 120,00</p>
+      <button onclick="pedidoWhats('Botijão P13')">Comprar</button>
+    </div>
   </div>
 
-  <!-- DASHBOARDS -->
-  <div class="card">
-    <h2>Controle de Estoque</h2>
-    <canvas id="graficoEstoque"></canvas>
+  <!-- Cliente -->
+  <div id="cliente" class="page">
+    <h2>Cadastro do Cliente</h2>
+    <input type="text" id="nomeCliente" placeholder="Seu nome">
+    <input type="text" id="whatsCliente" placeholder="Seu WhatsApp">
+    <button onclick="cadastrarCliente()">Cadastrar</button>
+    <p id="msgCliente"></p>
   </div>
 
-  <div class="card">
-    <h2>Entregas por Entregador</h2>
-    <canvas id="graficoEntregador"></canvas>
+  <!-- Admin -->
+  <div id="admin" class="page">
+    <h2>Painel do Empresário</h2>
+    <input type="text" id="nomeProduto" placeholder="Nome do produto">
+    <input type="number" id="precoProduto" placeholder="Preço">
+    <button onclick="adicionarProduto()">Adicionar Produto</button>
+    <p id="msgAdmin"></p>
   </div>
 
-  <script>
-  // ------------------- Dados simulados -------------------
-  let estoque = {
-    "Água": 193,
-    "GP": 10,
-    "P13": 180,
-    "P20": 12,
-    "P45": 15,
-    "P8": 8,
-    "PB": 65
-  };
+  <!-- Dashboard -->
+  <div id="dashboard" class="page">
+    <h2>Dashboard em Tempo Real</h2>
+    <div class="card"><canvas id="graficoVendas"></canvas></div>
+    <div class="card"><canvas id="graficoProdutos"></canvas></div>
+  </div>
 
-  let entregadores = {};
+<script>
+  // ---------------- Splash ----------------
+  setTimeout(()=>{ document.getElementById('splash').style.display='none'; showPage('catalogo'); },2000);
 
-  // ------------------- Config padrão -------------------
-  const configPadrao = {
-    plugins: {
-      legend: { labels: { color: "#fff" }},
-      datalabels: {
-        color: "#fff",
-        anchor: "end",
-        align: "top",
-        font: { weight: "bold", size: 14 }
-      }
-    },
-    scales: {
-      x: { ticks: { color: "#fff" }, grid: { color: "rgba(255,255,255,0.1)" }},
-      y: { ticks: { color: "#fff" }, grid: { color: "rgba(255,255,255,0.1)" }}
-    }
-  };
-
-  // ------------------- Gráfico Estoque -------------------
-  const ctxEstoque = document.getElementById('graficoEstoque');
-  const graficoEstoque = new Chart(ctxEstoque, {
-    type: 'bar',
-    data: {
-      labels: Object.keys(estoque),
-      datasets: [{
-        label: "Estoque Atual",
-        data: Object.values(estoque),
-        backgroundColor: ["#2196f3","#ff5722","#4caf50","#9c27b0","#ff9800","#f44336","#00bcd4"]
-      }]
-    },
-    options: { plugins: {...configPadrao.plugins}, scales: configPadrao.scales },
-    plugins: [ChartDataLabels]
-  });
-
-  // ------------------- Gráfico Entregadores -------------------
-  const ctxEnt = document.getElementById('graficoEntregador');
-  const graficoEntregador = new Chart(ctxEnt, {
-    type: 'bar',
-    data: { labels: [], datasets: [{ label: "Entregas", data: [], backgroundColor: "#4caf50" }] },
-    options: { plugins: {...configPadrao.plugins}, scales: configPadrao.scales },
-    plugins: [ChartDataLabels]
-  });
-
-  // ------------------- Funções -------------------
-  function atualizarEstoque() {
-    let produto = document.getElementById('produtoEstoque').value;
-    let qtd = parseInt(document.getElementById('qtdEstoque').value);
-    estoque[produto] += qtd;
-    graficoEstoque.data.datasets[0].data = Object.values(estoque);
-    graficoEstoque.update();
+  // ---------------- Navegação ----------------
+  function showPage(id){
+    document.querySelectorAll('.page').forEach(p=>p.style.display='none');
+    document.getElementById(id).style.display='block';
+    if(id==='dashboard') atualizarDashboard();
   }
 
-  function registrarEntrega() {
-    let nome = document.getElementById('entregador').value;
-    let qtd = parseInt(document.getElementById('qtdEntrega').value);
-
-    if (!entregadores[nome]) entregadores[nome] = 0;
-    entregadores[nome] += qtd;
-
-    graficoEntregador.data.labels = Object.keys(entregadores);
-    graficoEntregador.data.datasets[0].data = Object.values(entregadores);
-    graficoEntregador.update();
+  // ---------------- Cliente ----------------
+  function cadastrarCliente(){
+    let nome=document.getElementById('nomeCliente').value;
+    let whats=document.getElementById('whatsCliente').value;
+    localStorage.setItem('cliente',JSON.stringify({nome,whats}));
+    document.getElementById('msgCliente').innerText="✅ Cliente cadastrado com sucesso!";
   }
-  </script>
+
+  // ---------------- Admin ----------------
+  function adicionarProduto(){
+    let nome=document.getElementById('nomeProduto').value;
+    let preco=document.getElementById('precoProduto').value;
+    document.getElementById('msgAdmin').innerText="Produto '"+nome+"' adicionado (simulação).";
+  }
+
+  // ---------------- WhatsApp ----------------
+  function pedidoWhats(produto){
+    const cliente = JSON.parse(localStorage.getItem('cliente'))||{nome:'',whats:''};
+    let msg=`Olá, quero comprar: ${produto}\nCliente: ${cliente.nome}\nWhats: ${cliente.whats}`;
+    window.open(`https://wa.me/5551999999999?text=${encodeURIComponent(msg)}`,"_blank");
+  }
+
+  // ---------------- Dashboard ----------------
+  function atualizarDashboard(){
+    const ctx1=document.getElementById('graficoVendas').getContext('2d');
+    new Chart(ctx1,{ type:'bar', data:{
+      labels:["Água 20L","Botijão P13"],
+      datasets:[{ label:"Vendas", data:[12,8], backgroundColor:["#2196f3","#4caf50"] }]
+    }, options:{ plugins:{legend:{labels:{color:'#fff'}}, datalabels:{color:'#fff',anchor:'end',align:'top'}},
+    scales:{x:{ticks:{color:'#fff'}},y:{ticks:{color:'#fff'}}}}, plugins:[ChartDataLabels] });
+
+    const ctx2=document.getElementById('graficoProdutos').getContext('2d');
+    new Chart(ctx2,{ type:'pie', data:{
+      labels:["Água 20L","Botijão P13"],
+      datasets:[{ data:[60,40], backgroundColor:["#2196f3","#4caf50"] }]
+    }, options:{ plugins:{legend:{labels:{color:'#fff'}}}}, plugins:[ChartDataLabels] });
+  }
+
+  // ---------------- SW ----------------
+  if("serviceWorker" in navigator){ navigator.serviceWorker.register("sw.js"); }
+</script>
 
 </body>
 </html>
