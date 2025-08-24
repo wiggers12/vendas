@@ -10,25 +10,26 @@
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
 
   <style>
-    body { margin:0; font-family:Arial, sans-serif; background:#121212; color:white; }
-    header { background:#b8860b; padding:15px; text-align:center; font-size:22px; font-weight:bold; }
-    nav { display:flex; justify-content:center; gap:10px; background:#1e1e1e; padding:10px; }
-    nav button { background:#b8860b; border:none; padding:10px 15px; color:white; border-radius:5px; cursor:pointer; }
+    body { margin:0; font-family:Arial, sans-serif; background:#121212; color:white; text-align:center; }
+    header { background:#b8860b; padding:15px; font-size:22px; font-weight:bold; }
+    nav { display:flex; flex-wrap:wrap; justify-content:center; gap:10px; background:#1e1e1e; padding:10px; }
+    nav button { background:#b8860b; border:none; padding:10px 15px; color:white; border-radius:5px; cursor:pointer; min-width:120px; }
     nav button:hover { background:#daa520; }
-    .page { display:none; padding:20px; }
-    h2 { color:#daa520; }
-    .produto { background:#1e1e1e; padding:10px; border-radius:10px; margin:10px; text-align:center; }
+    .page { display:none; padding:20px; max-width:900px; margin:auto; }
+    h2 { color:#daa520; margin-bottom:20px; }
+    .produtos { display:grid; grid-template-columns:repeat(auto-fit, minmax(220px,1fr)); gap:15px; justify-items:center; }
+    .produto { background:#1e1e1e; padding:10px; border-radius:10px; text-align:center; width:100%; max-width:260px; }
     .produto img { width:100%; max-width:200px; border-radius:10px; }
     .produto h3 { margin:10px 0; }
     .produto p { margin:5px 0; }
-    .produto button { background:#25d366; border:none; padding:10px; border-radius:5px; color:white; cursor:pointer; }
+    .produto button { background:#25d366; border:none; padding:10px; border-radius:5px; color:white; cursor:pointer; width:100%; }
     .card { background:#1e1e1e; border-radius:10px; padding:20px; margin:20px auto; max-width:800px; }
     canvas { width:100% !important; height:300px !important; }
-    input, select { padding:8px; margin:5px; border-radius:5px; border:none; width:90%; max-width:300px; }
-    button.action { background:#b8860b; padding:10px 20px; margin-top:10px; }
-    .splash { position:fixed; top:0; left:0; width:100%; height:100%; background:#121212; display:flex; align-items:center; justify-content:center; flex-direction:column; color:#daa520; font-size:24px; font-weight:bold; z-index:9999; }
+    input, select { padding:10px; margin:8px auto; border-radius:5px; border:none; width:90%; max-width:320px; display:block; }
+    button.action { background:#b8860b; padding:12px 20px; margin-top:10px; width:90%; max-width:340px; }
+    .splash { position:fixed; top:0; left:0; width:100%; height:100%; background:#121212; display:flex; align-items:center; justify-content:center; flex-direction:column; color:#daa520; font-size:24px; font-weight:bold; z-index:9999; text-align:center; padding:20px; }
     .kpis { display:grid; grid-template-columns:repeat(auto-fit, minmax(180px,1fr)); gap:15px; margin:20px 0; }
-    .kpi { background:#1e1e1e; border-radius:10px; padding:20px; text-align:center; }
+    .kpi { background:#1e1e1e; border-radius:10px; padding:20px; }
     .kpi h3 { margin:0; font-size:16px; color:#daa520; }
     .kpi p { font-size:22px; font-weight:bold; margin:5px 0 0; }
     .kpi small { color:#888; }
@@ -55,17 +56,19 @@
   <!-- Catálogo -->
   <div id="catalogo" class="page">
     <h2>Catálogo de Produtos</h2>
-    <div class="produto">
-      <img src="https://via.placeholder.com/200x150.png?text=Produto+1" alt="Produto 1">
-      <h3>Produto Premium 1</h3>
-      <p>R$ 150,00</p>
-      <button onclick="pedidoWhats('Produto Premium 1 - R$150,00')">Comprar Agora</button>
-    </div>
-    <div class="produto">
-      <img src="https://via.placeholder.com/200x150.png?text=Produto+2" alt="Produto 2">
-      <h3>Produto Premium 2</h3>
-      <p>R$ 200,00</p>
-      <button onclick="pedidoWhats('Produto Premium 2 - R$200,00')">Comprar Agora</button>
+    <div class="produtos">
+      <div class="produto">
+        <img src="https://via.placeholder.com/200x150.png?text=Produto+1" alt="Produto 1">
+        <h3>Produto Premium 1</h3>
+        <p>R$ 150,00</p>
+        <button onclick="pedidoWhats('Produto Premium 1 - R$150,00')">Comprar Agora</button>
+      </div>
+      <div class="produto">
+        <img src="https://via.placeholder.com/200x150.png?text=Produto+2" alt="Produto 2">
+        <h3>Produto Premium 2</h3>
+        <p>R$ 200,00</p>
+        <button onclick="pedidoWhats('Produto Premium 2 - R$200,00')">Comprar Agora</button>
+      </div>
     </div>
   </div>
 
@@ -81,7 +84,7 @@
   <!-- Admin -->
   <div id="admin" class="page">
     <h2>Painel do Empresário</h2>
-    <p>📦 Aqui você pode adicionar novos produtos e atualizar preços.</p>
+    <p>📦 Gerencie seu catálogo, preços e relatórios em tempo real.</p>
     <input type="text" id="nomeProduto" placeholder="Nome do produto">
     <input type="number" id="precoProduto" placeholder="Preço">
     <button class="action" onclick="adicionarProduto()">Adicionar Produto</button>
@@ -115,17 +118,17 @@
   </div>
 
 <script>
-  // ---------------- Splash ----------------
+  // Splash
   setTimeout(()=>{ document.getElementById('splash').style.display='none'; showPage('catalogo'); },2000);
 
-  // ---------------- Navegação ----------------
+  // Navegação
   function showPage(id){
     document.querySelectorAll('.page').forEach(p=>p.style.display='none');
     document.getElementById(id).style.display='block';
     if(id==='dashboard') atualizarDashboard();
   }
 
-  // ---------------- Cliente ----------------
+  // Cliente
   function cadastrarCliente(){
     let nome=document.getElementById('nomeCliente').value;
     let whats=document.getElementById('whatsCliente').value;
@@ -133,27 +136,27 @@
     document.getElementById('msgCliente').innerText="✅ Cliente cadastrado!";
   }
 
-  // ---------------- Admin ----------------
+  // Admin
   function adicionarProduto(){
     let nome=document.getElementById('nomeProduto').value;
     let preco=document.getElementById('precoProduto').value;
     document.getElementById('msgAdmin').innerText="Produto '"+nome+"' adicionado (simulação).";
   }
 
-  // ---------------- WhatsApp ----------------
+  // WhatsApp
   function pedidoWhats(produto){
     const cliente = JSON.parse(localStorage.getItem('cliente'))||{nome:'',whats:''};
     let msg=`Olá, quero comprar: ${produto}\nCliente: ${cliente.nome}\nWhats: ${cliente.whats}`;
     window.open(`https://wa.me/5551999999999?text=${encodeURIComponent(msg)}`,"_blank");
   }
 
-  // ---------------- Pagamentos ----------------
+  // Pagamento
   function simularPagamento(){
     let forma=document.getElementById('formaPagamento').value;
     document.getElementById('msgPagamento').innerText="✅ Pagamento aprovado via "+forma.toUpperCase()+" (simulação)";
   }
 
-  // ---------------- Dashboard ----------------
+  // Dashboard
   function atualizarDashboard(){
     const ctx1=document.getElementById('graficoVendas').getContext('2d');
     new Chart(ctx1,{ type:'bar', data:{
