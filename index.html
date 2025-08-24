@@ -2,182 +2,141 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Gigas - Sistema Demo</title>
+  <title>Dashboard GIGAS</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
   <style>
-    body { font-family: Arial; margin: 0; background: #f4f6f9; }
-    header { background: #004aad; color: white; padding: 15px; text-align: center; font-size: 22px; }
-    nav { text-align: center; margin: 20px; }
-    nav button { margin: 5px; padding: 10px 20px; border: none; border-radius: 5px; background: #004aad; color: white; cursor: pointer; }
-    nav button:hover { background: #08306b; }
-    .page { display: none; padding: 20px; }
-    h2 { color: #004aad; }
-    form input, form select, form button { display: block; margin: 10px 0; padding: 8px; width: 100%; max-width: 300px; }
-    form button { background: #004aad; color: white; border: none; border-radius: 5px; cursor: pointer; }
-    form button:hover { background: #08306b; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
-    .card { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px; }
-    .kpi { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); text-align: center; }
-    .kpi h3 { margin: 0; font-size: 18px; color: #004aad; }
-    .kpi p { font-size: 24px; margin: 5px 0 0; font-weight: bold; }
-    canvas { width: 100% !important; height: 300px !important; }
+    body {
+      background-color: #121212;
+      color: white;
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    .card {
+      background: #1e1e1e;
+      border-radius: 10px;
+      padding: 20px;
+      margin: 20px auto;
+      max-width: 800px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.5);
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 10px;
+    }
   </style>
 </head>
 <body>
 
-<header>Gigas - Sistema Demo</header>
+  <h1 style="text-align:center">📊 Dashboard GIGAS</h1>
 
-<nav>
-  <button onclick="showPage('entregador')">📦 Entregador</button>
-  <button onclick="showPage('estoque')">🏪 Estoque</button>
-  <button onclick="showPage('dashboard')">📊 Dashboard</button>
-</nav>
-
-<!-- Página Entregador -->
-<div id="entregador" class="page">
-  <h2>Registro de Entregas</h2>
-  <form id="formEntrega">
-    <input type="text" id="entregadorNome" placeholder="Nome do entregador" required>
-    <input type="text" id="produtoEntrega" placeholder="Produto (ex: P13)" required>
-    <input type="number" id="quantidadeEntrega" placeholder="Quantidade" required>
-    <button type="submit">Registrar Entrega</button>
-  </form>
-</div>
-
-<!-- Página Estoque -->
-<div id="estoque" class="page">
-  <h2>Controle de Estoque</h2>
-  <form id="formEstoque">
-    <input type="text" id="produtoEstoque" placeholder="Produto (ex: P13)" required>
-    <select id="tipoMovimento">
-      <option value="entrada">Entrada</option>
-      <option value="saida">Saída</option>
-    </select>
-    <input type="number" id="quantidadeEstoque" placeholder="Quantidade" required>
-    <button type="submit">Registrar Movimento</button>
-  </form>
-</div>
-
-<!-- Página Dashboard -->
-<div id="dashboard" class="page">
-  <h2>Dashboard em tempo real</h2>
-
-  <!-- KPIs -->
-  <div class="kpi-grid">
-    <div class="kpi">
-      <h3>Total de Entregas</h3>
-      <p id="kpiEntregas">0</p>
-    </div>
-    <div class="kpi">
-      <h3>Produtos Entregues</h3>
-      <p id="kpiProdutosEntregues">0</p>
-    </div>
-    <div class="kpi">
-      <h3>Total em Estoque</h3>
-      <p id="kpiEstoque">0</p>
-    </div>
-    <div class="kpi">
-      <h3>Produtos em Estoque</h3>
-      <p id="kpiProdutosEstoque">0</p>
-    </div>
+  <!-- Gráfico de Estoque -->
+  <div class="card">
+    <h2>Controle de Estoque</h2>
+    <canvas id="graficoEstoque"></canvas>
   </div>
 
-  <!-- Gráficos -->
-  <div class="grid">
-    <div class="card"><canvas id="graficoEntregas"></canvas></div>
-    <div class="card"><canvas id="graficoEstoque"></canvas></div>
-    <div class="card"><canvas id="graficoPizza"></canvas></div>
+  <!-- Gráfico de Vendas por Mês -->
+  <div class="card">
+    <h2>Vendas Mensais</h2>
+    <canvas id="graficoVendas"></canvas>
   </div>
-</div>
+
+  <!-- Gráfico de Participação por Produto -->
+  <div class="card">
+    <h2>Participação por Produto</h2>
+    <canvas id="graficoPizza"></canvas>
+  </div>
 
 <script>
-  // Mostrar páginas
-  function showPage(id) {
-    document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
-    document.getElementById(id).style.display = 'block';
-    if (id === 'dashboard') atualizarGraficos();
+const configPadrao = {
+  plugins: {
+    legend: { labels: { color: "#fff" }},
+    datalabels: {
+      color: "#fff",
+      anchor: "end",
+      align: "top",
+      font: { weight: "bold", size: 14 }
+    }
+  },
+  scales: {
+    x: {
+      ticks: { color: "#fff" },
+      grid: { color: "rgba(255,255,255,0.1)" }
+    },
+    y: {
+      ticks: { color: "#fff" },
+      grid: { color: "rgba(255,255,255,0.1)" }
+    }
   }
-  showPage('entregador'); // inicia na tela de entregador
+};
 
-  // Registrar entrega
-  document.getElementById("formEntrega").addEventListener("submit", e => {
-    e.preventDefault();
-    const entregas = JSON.parse(localStorage.getItem("entregas")) || [];
-    entregas.push({
-      entregador: document.getElementById("entregadorNome").value,
-      produto: document.getElementById("produtoEntrega").value,
-      quantidade: parseInt(document.getElementById("quantidadeEntrega").value),
-      data: new Date().toLocaleString()
-    });
-    localStorage.setItem("entregas", JSON.stringify(entregas));
-    alert("Entrega registrada!");
-    e.target.reset();
-  });
+// Gráfico de Estoque
+new Chart(document.getElementById('graficoEstoque'), {
+  type: 'bar',
+  data: {
+    labels: ["Água", "GP", "P13", "P20", "P45", "P8", "PB"],
+    datasets: [{
+      label: "Estoque Atual",
+      data: [193, 10, 180, 12, 15, 8, 65],
+      backgroundColor: ["#2196f3","#ff5722","#4caf50","#9c27b0","#ff9800","#f44336","#00bcd4"]
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      title: { display: true, text: "Controle de Estoque - GIGAS", color: "#fff", font: { size: 18 }},
+      ...configPadrao.plugins
+    },
+    scales: configPadrao.scales
+  },
+  plugins: [ChartDataLabels]
+});
 
-  // Registrar estoque
-  document.getElementById("formEstoque").addEventListener("submit", e => {
-    e.preventDefault();
-    const estoque = JSON.parse(localStorage.getItem("estoque")) || {};
-    const produto = document.getElementById("produtoEstoque").value;
-    const tipo = document.getElementById("tipoMovimento").value;
-    const qtd = parseInt(document.getElementById("quantidadeEstoque").value);
+// Gráfico de Vendas por Mês
+new Chart(document.getElementById('graficoVendas'), {
+  type: 'line',
+  data: {
+    labels: ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"],
+    datasets: [{
+      label: "Vendas",
+      data: [120, 135, 110, 160, 145, 175, 190, 155, 165, 140, 130, 150],
+      borderColor: "#4caf50",
+      backgroundColor: "rgba(76,175,80,0.3)",
+      tension: 0.4,
+      fill: true
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      title: { display: true, text: "Vendas Mensais - GIGAS", color: "#fff", font: { size: 18 }},
+      ...configPadrao.plugins
+    },
+    scales: configPadrao.scales
+  },
+  plugins: [ChartDataLabels]
+});
 
-    if (!estoque[produto]) estoque[produto] = 0;
-    if (tipo === "entrada") estoque[produto] += qtd;
-    else estoque[produto] -= qtd;
-
-    localStorage.setItem("estoque", JSON.stringify(estoque));
-    alert("Movimento registrado!");
-    e.target.reset();
-  });
-
-  // Gráficos e KPIs
-  function atualizarGraficos() {
-    const entregas = JSON.parse(localStorage.getItem("entregas")) || [];
-    const estoque = JSON.parse(localStorage.getItem("estoque")) || {};
-
-    // --- KPIs ---
-    const totalEntregas = entregas.reduce((sum, e) => sum + e.quantidade, 0);
-    const produtosEntregues = new Set(entregas.map(e => e.produto)).size;
-    const totalEstoque = Object.values(estoque).reduce((sum, qtd) => sum + qtd, 0);
-    const produtosEstoque = Object.keys(estoque).length;
-
-    document.getElementById("kpiEntregas").innerText = totalEntregas;
-    document.getElementById("kpiProdutosEntregues").innerText = produtosEntregues;
-    document.getElementById("kpiEstoque").innerText = totalEstoque;
-    document.getElementById("kpiProdutosEstoque").innerText = produtosEstoque;
-
-    // --- Gráficos ---
-    const entregasAgrupadas = {};
-    entregas.forEach(e => {
-      entregasAgrupadas[e.produto] = (entregasAgrupadas[e.produto] || 0) + e.quantidade;
-    });
-
-    new Chart(document.getElementById("graficoEntregas"), {
-      type: "bar",
-      data: {
-        labels: Object.keys(entregasAgrupadas),
-        datasets: [{ label: "Entregas", data: Object.values(entregasAgrupadas), backgroundColor: "#004aad" }]
-      }
-    });
-
-    new Chart(document.getElementById("graficoEstoque"), {
-      type: "line",
-      data: {
-        labels: Object.keys(estoque),
-        datasets: [{ label: "Estoque Atual", data: Object.values(estoque), borderColor: "#004aad", fill: false }]
-      }
-    });
-
-    new Chart(document.getElementById("graficoPizza"), {
-      type: "pie",
-      data: {
-        labels: Object.keys(entregasAgrupadas),
-        datasets: [{ data: Object.values(entregasAgrupadas), backgroundColor: ["#004aad","#1e88e5","#64b5f6","#90caf9"] }]
-      }
-    });
-  }
+// Gráfico de Participação por Produto
+new Chart(document.getElementById('graficoPizza'), {
+  type: 'pie',
+  data: {
+    labels: ["Água","GP","P13","P20","P45","P8","PB"],
+    datasets: [{
+      data: [193,10,180,12,15,8,65],
+      backgroundColor: ["#2196f3","#ff5722","#4caf50","#9c27b0","#ff9800","#f44336","#00bcd4"]
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      title: { display: true, text: "Participação por Produto (%)", color: "#fff", font: { size: 18 }},
+      ...configPadrao.plugins
+    }
+  },
+  plugins: [ChartDataLabels]
+});
 </script>
 
 </body>
