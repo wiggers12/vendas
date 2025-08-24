@@ -8,7 +8,172 @@
   <!-- ECharts -->
   <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
 
-  <!-- Fonte -->
+  <!-- Fonte --><!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DashControl Business - Dados</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { margin:0; font-family:'Poppins', sans-serif; background:#0d0d0d; color:white; }
+    header { background:linear-gradient(90deg,#8e44ad,#b8860b); padding:15px; font-size:22px; font-weight:700; text-align:center; }
+    h2 { color:#d4af37; margin:15px 0; text-align:center; }
+    section { background:#1a1a1a; padding:20px; margin:20px auto; border-radius:12px; max-width:600px; box-shadow:0 4px 20px rgba(0,0,0,0.6); }
+    label { display:block; margin:10px 0 5px; font-weight:600; color:#d4af37; }
+    input, select { padding:10px; border-radius:6px; border:none; width:100%; background:#2c2c2c; color:white; font-size:14px; }
+    .btn { background:#8e44ad; padding:12px; margin-top:10px; border-radius:8px; color:white; font-weight:bold; cursor:pointer; text-align:center; }
+    .btn:hover { background:#b8860b; }
+    .msg { margin-top:10px; font-size:14px; }
+  </style>
+</head>
+<body>
+
+<header>⚙️ DashControl Business - Inserção de Dados</header>
+
+<!-- Cadastro de Produtos/Serviços -->
+<section>
+  <h2>📦 Cadastro de Produtos/Serviços</h2>
+  <label>Nome:</label>
+  <input type="text" id="nomeProd">
+
+  <label>Valor Unitário (R$):</label>
+  <input type="number" id="valorProd">
+
+  <label>Quantidade (deixe vazio se for serviço):</label>
+  <input type="number" id="qtdProd">
+
+  <div class="btn" onclick="adicionarProduto()">➕ Adicionar Produto</div>
+  <p id="msgProd" class="msg"></p>
+</section>
+
+<!-- Registro de Venda -->
+<section>
+  <h2>🛒 Registrar Venda</h2>
+  <label>Produto/Serviço:</label>
+  <select id="vendaProduto"></select>
+
+  <label>Forma de Pagamento:</label>
+  <select id="vendaPagamento">
+    <option value="Dinheiro">💵 Dinheiro</option>
+    <option value="Pix">⚡ Pix</option>
+    <option value="Débito">💳 Débito</option>
+    <option value="Crédito">💳 Crédito</option>
+  </select>
+
+  <label>Valor Recebido (se dinheiro):</label>
+  <input type="number" id="vendaRecebido">
+
+  <div class="btn" onclick="registrarVenda()">💾 Registrar Venda</div>
+  <p id="msgVenda" class="msg"></p>
+</section>
+
+<!-- Financeiro -->
+<section>
+  <h2>💰 Financeiro</h2>
+  <label>Caixa Inicial (R$):</label>
+  <input type="number" id="caixaInicial">
+  <div class="btn" onclick="definirCaixa()">📌 Definir Caixa Inicial</div>
+  <div class="msg">
+    Entradas: <span id="finEntradas">0</span> | 
+    Saídas: <span id="finSaidas">0</span> | 
+    Saldo Atual: <span id="finSaldo">0</span>
+  </div>
+</section>
+
+<script>
+let dados = JSON.parse(localStorage.getItem("dashBusiness")) || {produtos:[], vendas:[], financeiro:{caixa:0, entradas:0, saidas:0, saldo:0}};
+
+// Salvar no localStorage
+function salvar(){
+  localStorage.setItem("dashBusiness", JSON.stringify(dados));
+}
+
+// Atualizar select de produtos
+function atualizarSelect(){
+  let select=document.getElementById("vendaProduto");
+  select.innerHTML="";
+  dados.produtos.forEach((p,i)=>{
+    let opt=document.createElement("option");
+    opt.value=i;
+    opt.textContent=p.nome+" (R$ "+p.valor+")";
+    select.appendChild(opt);
+  });
+}
+
+// Adicionar Produto
+function adicionarProduto(){
+  let nome=document.getElementById("nomeProd").value;
+  let valor=parseFloat(document.getElementById("valorProd").value)||0;
+  let qtd=parseInt(document.getElementById("qtdProd").value)||0;
+
+  if(!nome || valor<=0){
+    document.getElementById("msgProd").innerText="❌ Preencha nome e valor!";
+    return;
+  }
+
+  dados.produtos.push({nome, valor, qtd});
+  salvar();
+  atualizarSelect();
+  document.getElementById("msgProd").innerText="✅ Produto adicionado!";
+  document.getElementById("nomeProd").value="";
+  document.getElementById("valorProd").value="";
+  document.getElementById("qtdProd").value="";
+}
+
+// Registrar Venda
+function registrarVenda(){
+  let idx=document.getElementById("vendaProduto").value;
+  if(idx===""){ alert("Selecione um produto!"); return; }
+  let produto=dados.produtos[idx];
+  let pagamento=document.getElementById("vendaPagamento").value;
+  let recebido=parseFloat(document.getElementById("vendaRecebido").value)||produto.valor;
+
+  // Estoque
+  if(produto.qtd && produto.qtd>0){ produto.qtd--; }
+
+  // Troco
+  let troco=0;
+  if(pagamento==="Dinheiro" && recebido>produto.valor){
+    troco=recebido-produto.valor;
+    dados.financeiro.saidas+=troco;
+  }
+
+  // Registro de venda
+  dados.vendas.push({produto:produto.nome, valor:produto.valor, pagamento, data:new Date().toLocaleDateString(), troco});
+  dados.financeiro.entradas+=produto.valor;
+  dados.financeiro.saldo=(dados.financeiro.caixa||0)+dados.financeiro.entradas-dados.financeiro.saidas;
+
+  salvar();
+  atualizarSelect();
+  atualizarFinanceiro();
+  document.getElementById("msgVenda").innerText="✅ Venda registrada!";
+}
+
+// Definir caixa inicial
+function definirCaixa(){
+  let inicial=parseFloat(document.getElementById("caixaInicial").value)||0;
+  dados.financeiro.caixa=inicial;
+  dados.financeiro.saldo=inicial;
+  salvar();
+  atualizarFinanceiro();
+  alert("💵 Caixa inicial definido!");
+}
+
+// Atualizar financeiro
+function atualizarFinanceiro(){
+  document.getElementById("finEntradas").innerText=dados.financeiro.entradas;
+  document.getElementById("finSaidas").innerText=dados.financeiro.saidas;
+  document.getElementById("finSaldo").innerText=dados.financeiro.saldo;
+}
+
+// Inicialização
+atualizarSelect();
+atualizarFinanceiro();
+</script>
+
+</body>
+</html>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 
   <style>
