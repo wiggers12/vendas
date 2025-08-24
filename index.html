@@ -9,14 +9,17 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
 
+  <!-- Fonte moderna -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+
   <style>
-    body { margin:0; font-family:'Segoe UI', Arial, sans-serif; background:#0d0d0d; color:white; text-align:center; }
-    header { background:linear-gradient(90deg,#8e44ad,#b8860b); padding:15px; font-size:22px; font-weight:bold; }
+    body { margin:0; font-family:'Poppins', sans-serif; background:#0d0d0d; color:white; text-align:center; }
+    header { background:linear-gradient(90deg,#8e44ad,#b8860b); padding:15px; font-size:24px; font-weight:700; letter-spacing:1px; }
     nav { display:flex; justify-content:center; gap:10px; background:#1e1e1e; padding:10px; flex-wrap:wrap; }
-    nav button { background:#8e44ad; border:none; padding:10px 15px; color:white; border-radius:8px; cursor:pointer; min-width:120px; font-weight:bold; }
+    nav button { background:#8e44ad; border:none; padding:10px 15px; color:white; border-radius:8px; cursor:pointer; min-width:120px; font-weight:bold; font-size:15px; }
     nav button:hover { background:#b8860b; transition:0.3s; }
     .page { display:none; padding:20px; max-width:1200px; margin:auto; }
-    h2 { color:#b8860b; margin-bottom:20px; }
+    h2 { color:#d4af37; margin-bottom:20px; font-weight:700; font-size:22px; }
 
     /* Splash */
     .splash { position:fixed; top:0; left:0; width:100%; height:100%; 
@@ -28,14 +31,21 @@
 
     /* Formulário Admin */
     form { max-width:600px; margin:auto; text-align:left; }
-    label { display:block; margin:10px 0 5px; font-weight:bold; color:#b8860b; }
-    input, select { padding:10px; border-radius:6px; border:none; width:100%; background:#2c2c2c; color:white; }
-    button.action { background:#8e44ad; padding:12px; margin:10px 5px; border:none; border-radius:8px; color:white; font-weight:bold; cursor:pointer; }
+    label { display:block; margin:10px 0 5px; font-weight:600; color:#d4af37; }
+    input, select { padding:10px; border-radius:6px; border:none; width:100%; background:#2c2c2c; color:white; font-size:14px; }
+    button.action { background:#8e44ad; padding:12px; margin:10px 5px; border:none; border-radius:8px; color:white; font-weight:bold; cursor:pointer; font-size:15px; }
     button.action:hover { background:#b8860b; }
 
     /* Dashboard */
-    .card { background:#1a1a1a; border-radius:12px; padding:20px; margin:20px auto; max-width:1000px; box-shadow:0 0 12px rgba(0,0,0,0.5); }
-    canvas { width:100% !important; height:350px !important; }
+    .card { 
+      background:linear-gradient(160deg,#1a1a1a,#111); 
+      border-radius:12px; 
+      padding:20px; 
+      margin:25px auto; 
+      max-width:1000px; 
+      box-shadow:0 4px 20px rgba(0,0,0,0.6); 
+    }
+    canvas { width:100% !important; height:380px !important; }
   </style>
 </head>
 <body>
@@ -90,7 +100,7 @@
 
   <!-- Dashboard -->
   <div id="dashboard" class="page">
-    <h2>Dashboard</h2>
+    <h2>Dashboard Premium</h2>
     <div class="card"><canvas id="graficoVendas"></canvas></div>
     <div class="card"><canvas id="graficoCategoria"></canvas></div>
     <div class="card"><canvas id="graficoReceita"></canvas></div>
@@ -138,13 +148,21 @@
   function atualizarDashboard(){
     if(produtos.length===0){ alert("Nenhum dado cadastrado!"); return; }
 
-    const configPadrao={plugins:{legend:{labels:{color:'#fff'}}, datalabels:{color:'#fff',anchor:'end',align:'top'}}, scales:{x:{ticks:{color:'#fff'}},y:{ticks:{color:'#fff'}}}};
+    const configPadrao={
+      plugins:{
+        title:{display:true, color:"#d4af37", font:{size:20, weight:"bold"}},
+        legend:{labels:{color:'#ccc', font:{size:14}}},
+        datalabels:{color:'#fff', anchor:'end', align:'top', font:{weight:'bold', size:14}, textStrokeColor:"#000", textStrokeWidth:3}
+      },
+      scales:{x:{ticks:{color:'#fff', font:{size:13}}}, y:{ticks:{color:'#fff', font:{size:13}}}}
+    };
 
     // Vendas por Produto
     new Chart(document.getElementById("graficoVendas"), {
       type:"bar",
-      data:{labels:produtos.map(p=>p.nome), datasets:[{label:"Vendas", data:produtos.map(p=>p.vendas), backgroundColor:"#8e44ad"}]},
-      options:configPadrao, plugins:[ChartDataLabels]
+      data:{labels:produtos.map(p=>p.nome), datasets:[{label:"Vendas", data:produtos.map(p=>p.vendas), backgroundColor:["#d4af37","#8e44ad","#1abc9c","#e74c3c","#3498db"]}]},
+      options:{...configPadrao, plugins:{...configPadrao.plugins, title:{...configPadrao.plugins.title, text:"📊 Vendas por Produto"}}},
+      plugins:[ChartDataLabels]
     });
 
     // Receita por Categoria
@@ -152,22 +170,24 @@
     produtos.forEach(p=>{ categorias[p.categoria]=(categorias[p.categoria]||0)+p.receita; });
     new Chart(document.getElementById("graficoCategoria"), {
       type:"bar",
-      data:{labels:Object.keys(categorias), datasets:[{label:"Receita", data:Object.values(categorias), backgroundColor:"#b8860b"}]},
-      options:configPadrao, plugins:[ChartDataLabels]
+      data:{labels:Object.keys(categorias), datasets:[{label:"Receita", data:Object.values(categorias), backgroundColor:["#8e44ad","#d4af37","#1abc9c"]}]},
+      options:{...configPadrao, plugins:{...configPadrao.plugins, title:{...configPadrao.plugins.title, text:"💰 Receita por Categoria"}}},
+      plugins:[ChartDataLabels]
     });
 
     // Receita por Produto (Pizza)
     new Chart(document.getElementById("graficoReceita"), {
       type:"doughnut",
-      data:{labels:produtos.map(p=>p.nome), datasets:[{data:produtos.map(p=>p.receita), backgroundColor:["#b8860b","#8e44ad","#3498db","#e74c3c","#2ecc71"]}]},
-      options:{plugins:{legend:{labels:{color:'#fff'}}}}, plugins:[ChartDataLabels]
+      data:{labels:produtos.map(p=>p.nome), datasets:[{data:produtos.map(p=>p.receita), backgroundColor:["#d4af37","#8e44ad","#1abc9c","#e74c3c","#3498db"]}]},
+      options:{plugins:{legend:{labels:{color:'#fff', font:{size:14}}}, title:{display:true, text:"🍩 Participação na Receita", color:"#d4af37", font:{size:20, weight:"bold"}}}},
+      plugins:[ChartDataLabels]
     });
 
     // Receita ao longo do tempo
     new Chart(document.getElementById("graficoLinha"), {
       type:"line",
-      data:{labels:produtos.map(p=>p.data), datasets:[{label:"Receita", data:produtos.map(p=>p.receita), borderColor:"#3498db", backgroundColor:"rgba(52,152,219,0.3)", fill:true, tension:0.3}]},
-      options:configPadrao
+      data:{labels:produtos.map(p=>p.data), datasets:[{label:"Receita", data:produtos.map(p=>p.receita), borderColor:"#8e44ad", backgroundColor:"rgba(142,68,173,0.3)", fill:true, tension:0.3}]},
+      options:{...configPadrao, plugins:{...configPadrao.plugins, title:{...configPadrao.plugins.title, text:"📈 Receita ao Longo do Tempo"}}}
     });
 
     // Receita por Região
@@ -175,8 +195,9 @@
     produtos.forEach(p=>{ regioes[p.regiao]=(regioes[p.regiao]||0)+p.receita; });
     new Chart(document.getElementById("graficoRegiao"), {
       type:"bar",
-      data:{labels:Object.keys(regioes), datasets:[{label:"Receita", data:Object.values(regioes), backgroundColor:"#e74c3c"}]},
-      options:configPadrao, plugins:[ChartDataLabels]
+      data:{labels:Object.keys(regioes), datasets:[{label:"Receita", data:Object.values(regioes), backgroundColor:["#1abc9c","#e74c3c","#3498db","#d4af37"]}]},
+      options:{...configPadrao, plugins:{...configPadrao.plugins, title:{...configPadrao.plugins.title, text:"🌍 Receita por Região"}}},
+      plugins:[ChartDataLabels]
     });
   }
 </script>
