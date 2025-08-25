@@ -62,51 +62,61 @@
 
   function montarGraficos(vendas, estoque, financeiro) {
     // Vendas por Produto
-    let vendasPorProduto = {};
-    vendas.forEach(v => vendasPorProduto[v.produto] = (vendasPorProduto[v.produto] || 0) + v.valor);
+    if (vendas.length > 0) {
+      let vendasPorProduto = {};
+      vendas.forEach(v => vendasPorProduto[v.produto] = (vendasPorProduto[v.produto] || 0) + v.valor);
 
-    renderChart("chartVendas", {
-      title:{text:"🛒 Vendas por Produto", textStyle:{color:'#d4af37'}},
-      xAxis:{type:"category", data:Object.keys(vendasPorProduto), axisLabel:{color:'#fff'}},
-      yAxis:{type:"value", axisLabel:{color:'#fff'}},
-      series:[{type:"bar", data:Object.values(vendasPorProduto), itemStyle:{color:"#8e44ad"}, label:{show:true, color:"#fff"}}]
-    });
+      renderChart("chartVendas", {
+        title:{text:"🛒 Vendas por Produto", textStyle:{color:'#d4af37'}},
+        xAxis:{type:"category", data:Object.keys(vendasPorProduto), axisLabel:{color:'#fff'}},
+        yAxis:{type:"value", axisLabel:{color:'#fff'}},
+        series:[{type:"bar", data:Object.values(vendasPorProduto), itemStyle:{color:"#8e44ad"}, label:{show:true, color:"#fff"}}]
+      });
+    }
 
     // Estoque Atual
-    renderChart("chartEstoque", {
-      title:{text:"📦 Estoque Atual", textStyle:{color:'#d4af37'}},
-      xAxis:{type:"category", data:estoque.map(e=>e.nome), axisLabel:{color:'#fff'}},
-      yAxis:{type:"value", axisLabel:{color:'#fff'}},
-      series:[{type:"bar", data:estoque.map(e=>e.quantidade ?? 0), itemStyle:{color:"#1abc9c"}, label:{show:true, color:"#fff"}}]
-    });
+    if (estoque.length > 0) {
+      renderChart("chartEstoque", {
+        title:{text:"📦 Estoque Atual", textStyle:{color:'#d4af37'}},
+        xAxis:{type:"category", data:estoque.map(e=>e.nome), axisLabel:{color:'#fff'}},
+        yAxis:{type:"value", axisLabel:{color:'#fff'}},
+        series:[{type:"bar", data:estoque.map(e=>e.quantidade ?? 0), itemStyle:{color:"#1abc9c"}, label:{show:true, color:"#fff"}}]
+      });
+    }
 
     // Financeiro (Entradas x Saídas)
-    let entradas = financeiro.reduce((s,f)=>s+(f.entrada||0),0);
-    let saidas = financeiro.reduce((s,f)=>s+(f.saida||0),0);
-    renderChart("chartFinanceiro", {
-      title:{text:"💰 Entradas x Saídas", textStyle:{color:'#d4af37'}},
-      xAxis:{type:"category", data:["Entradas","Saídas"], axisLabel:{color:'#fff'}},
-      yAxis:{type:"value", axisLabel:{color:'#fff'}},
-      series:[{type:"bar", data:[entradas,saidas], itemStyle:{color:"#b8860b"}, label:{show:true, color:"#fff"}}]
-    });
+    if (financeiro.length > 0) {
+      let entradas = financeiro.reduce((s,f)=>s+(f.entrada||0),0);
+      let saidas = financeiro.reduce((s,f)=>s+(f.saida||0),0);
+      renderChart("chartFinanceiro", {
+        title:{text:"💰 Entradas x Saídas", textStyle:{color:'#d4af37'}},
+        xAxis:{type:"category", data:["Entradas","Saídas"], axisLabel:{color:'#fff'}},
+        yAxis:{type:"value", axisLabel:{color:'#fff'}},
+        series:[{type:"bar", data:[entradas,saidas], itemStyle:{color:"#b8860b"}, label:{show:true, color:"#fff"}}]
+      });
+    }
 
     // Formas de Pagamento
-    let formas = {};
-    vendas.forEach(v => formas[v.pagamento]=(formas[v.pagamento]||0)+v.valor);
-    renderChart("chartPagamentos", {
-      title:{text:"💳 Formas de Pagamento", textStyle:{color:'#d4af37'}},
-      series:[{type:"pie", radius:["40%","70%"], data:Object.keys(formas).map(f=>({name:f,value:formas[f]})), label:{color:"#fff"}}]
-    });
+    if (vendas.length > 0) {
+      let formas = {};
+      vendas.forEach(v => formas[v.pagamento]=(formas[v.pagamento]||0)+v.valor);
+      renderChart("chartPagamentos", {
+        title:{text:"💳 Formas de Pagamento", textStyle:{color:'#d4af37'}},
+        series:[{type:"pie", radius:["40%","70%"], data:Object.keys(formas).map(f=>({name:f,value:formas[f]})), label:{color:"#fff"}}]
+      });
+    }
 
     // Receita ao Longo do Tempo
-    let porData = {};
-    vendas.forEach(v => { porData[v.data]=(porData[v.data]||0)+v.valor; });
-    renderChart("chartLinha", {
-      title:{text:"📈 Receita ao Longo do Tempo", textStyle:{color:'#d4af37'}},
-      xAxis:{type:"category", data:Object.keys(porData), axisLabel:{color:'#fff'}},
-      yAxis:{type:"value", axisLabel:{color:'#fff'}},
-      series:[{type:"line", data:Object.values(porData), smooth:true, itemStyle:{color:"#d4af37"}}]
-    });
+    if (vendas.length > 0) {
+      let porData = {};
+      vendas.forEach(v => { porData[v.data]=(porData[v.data]||0)+v.valor; });
+      renderChart("chartLinha", {
+        title:{text:"📈 Receita ao Longo do Tempo", textStyle:{color:'#d4af37'}},
+        xAxis:{type:"category", data:Object.keys(porData), axisLabel:{color:'#fff'}},
+        yAxis:{type:"value", axisLabel:{color:'#fff'}},
+        series:[{type:"line", data:Object.values(porData), smooth:true, itemStyle:{color:"#d4af37"}}]
+      });
+    }
   }
 
   carregarDados();
