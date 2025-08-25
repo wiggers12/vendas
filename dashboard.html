@@ -63,7 +63,7 @@
   function montarGraficos(vendas, estoque, financeiro) {
     // Vendas por Produto
     let vendasPorProduto = {};
-    vendas.forEach(v => vendasPorProduto[v.nome] = (vendasPorProduto[v.nome] || 0) + v.valor);
+    vendas.forEach(v => vendasPorProduto[v.produto] = (vendasPorProduto[v.produto] || 0) + v.valor);
 
     renderChart("chartVendas", {
       title:{text:"🛒 Vendas por Produto", textStyle:{color:'#d4af37'}},
@@ -77,7 +77,7 @@
       title:{text:"📦 Estoque Atual", textStyle:{color:'#d4af37'}},
       xAxis:{type:"category", data:estoque.map(e=>e.nome), axisLabel:{color:'#fff'}},
       yAxis:{type:"value", axisLabel:{color:'#fff'}},
-      series:[{type:"bar", data:estoque.map(e=>e.qtd ?? 0), itemStyle:{color:"#1abc9c"}, label:{show:true, color:"#fff"}}]
+      series:[{type:"bar", data:estoque.map(e=>e.quantidade ?? 0), itemStyle:{color:"#1abc9c"}, label:{show:true, color:"#fff"}}]
     });
 
     // Financeiro (Entradas x Saídas)
