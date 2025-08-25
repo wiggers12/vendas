@@ -29,6 +29,13 @@
       transition: 0.3s;
     }
     #btnExportar:hover { background: #c0392b; }
+    .chart-footer {
+      text-align: center;
+      margin-top: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #d4af37;
+    }
   </style>
 </head>
 <body>
@@ -40,11 +47,26 @@
 </div>
 
 <div id="dashboardContent">
-    <div class="chart-card"><div id="chartVendas" class="chart"></div></div>
-    <div class="chart-card"><div id="chartEstoque" class="chart"></div></div>
-    <div class="chart-card"><div id="chartFinanceiro" class="chart"></div></div>
-    <div class="chart-card"><div id="chartPagamentos" class="chart"></div></div>
-    <div class="chart-card"><div id="chartLinha" class="chart"></div></div>
+    <div class="chart-card">
+      <div id="chartVendas" class="chart"></div>
+      <div id="footerVendas" class="chart-footer"></div>
+    </div>
+    <div class="chart-card">
+      <div id="chartEstoque" class="chart"></div>
+      <div id="footerEstoque" class="chart-footer"></div>
+    </div>
+    <div class="chart-card">
+      <div id="chartFinanceiro" class="chart"></div>
+      <div id="footerFinanceiro" class="chart-footer"></div>
+    </div>
+    <div class="chart-card">
+      <div id="chartPagamentos" class="chart"></div>
+      <div id="footerPagamentos" class="chart-footer"></div>
+    </div>
+    <div class="chart-card">
+      <div id="chartLinha" class="chart"></div>
+      <div id="footerLinha" class="chart-footer"></div>
+    </div>
 </div>
 
 <script type="module">
@@ -66,6 +88,14 @@
     const element = document.getElementById(elementId);
     if (element) {
       element.innerHTML = `<div class="no-data-message">${message}</div>`;
+    }
+  }
+
+  // Nova função para atualizar o rodapé
+  function atualizarRodape(footerId, texto) {
+    const footerElement = document.getElementById(footerId);
+    if (footerElement) {
+      footerElement.innerHTML = texto;
     }
   }
 
@@ -107,8 +137,13 @@
         tooltip: { trigger: 'item', formatter: "{b}: {c} unidades" },
         series:[{type:"pie", radius:["40%","70%"], data:produtosData, label:{color:'#fff'}}]
       });
+      
+      const totalVendas = Object.values(contagemVendasPorProduto).reduce((sum, count) => sum + count, 0);
+      atualizarRodape("footerVendas", `Total de itens vendidos: ${totalVendas}`);
+
     } else {
       showNoDataMessage("chartVendas", "Nenhuma venda registrada.");
+      atualizarRodape("footerVendas", "");
     }
 
     // 📦 Estoque Atual
@@ -122,8 +157,13 @@
         yAxis:{type:"value", axisLabel:{color:'#fff'}},
         series:[{type:"bar", data:estoqueQtds, itemStyle:{color:"#1abc9c"}, label:{show:true, color:"#fff"}}]
       });
+
+      const totalItensEstoque = estoque.reduce((sum, item) => sum + (item.quantidade || 0), 0);
+      atualizarRodape("footerEstoque", `Total de itens em estoque: ${totalItensEstoque}`);
+
     } else {
       showNoDataMessage("chartEstoque", "Nenhum produto no estoque.");
+      atualizarRodape("footerEstoque", "");
     }
 
     // 💰 Financeiro (Entradas x Saídas)
@@ -135,8 +175,13 @@
         tooltip: { trigger: 'item' },
         series:[{type:"pie", radius:["40%","70%"], data:[{name:"Entradas", value:entradas},{name:"Saídas", value:saidas}], label:{color:'#fff'}}]
       });
+
+      const saldoTotal = entradas - saidas;
+      atualizarRodape("footerFinanceiro", `Saldo Atual: R$ ${saldoTotal.toFixed(2)}`);
+
     } else {
       showNoDataMessage("chartFinanceiro", "Nenhum dado financeiro.");
+      atualizarRodape("footerFinanceiro", "");
     }
 
     // 💳 Formas de Pagamento
@@ -152,8 +197,13 @@
         tooltip: { trigger: 'item' },
         series:[{type:"pie", radius:["40%","70%"], data:pagamentosData, label:{color:"#fff"}}]
       });
+
+      const totalRecebido = Object.values(formas).reduce((sum, val) => sum + val, 0);
+      atualizarRodape("footerPagamentos", `Total Recebido: R$ ${totalRecebido.toFixed(2)}`);
+
     } else {
       showNoDataMessage("chartPagamentos", "Nenhuma venda registrada.");
+      atualizarRodape("footerPagamentos", "");
     }
 
     // 📈 Receita ao Longo do Tempo
@@ -170,14 +220,17 @@
         yAxis:{type:"value", axisLabel:{color:'#fff'}},
         series:[{type:"line", data:valores, smooth:true, itemStyle:{color:"#d4af37"}}]
       });
+
+      const totalReceita = valores.reduce((sum, val) => sum + val, 0);
+      atualizarRodape("footerLinha", `Receita Total: R$ ${totalReceita.toFixed(2)}`);
+
     } else {
       showNoDataMessage("chartLinha", "Nenhuma venda para exibir a receita.");
+      atualizarRodape("footerLinha", "");
     }
   }
 
-  // Função para exportar o dashboard como PDF
   function exportarPDF() {
-    // Esconder o botão de exportar durante a criação do PDF
     document.getElementById('btnExportar').style.display = 'none';
 
     const element = document.getElementById('dashboardContent');
@@ -189,15 +242,12 @@
     };
 
     html2pdf().set(options).from(element).save().then(() => {
-        // Mostrar o botão de exportar novamente após a conclusão
         document.getElementById('btnExportar').style.display = 'block';
     });
   }
 
-  // Evento para o botão de exportar
   document.getElementById('btnExportar').addEventListener('click', exportarPDF);
 
-  // Início do carregamento dos dados
   carregarDados();
 </script>
 
