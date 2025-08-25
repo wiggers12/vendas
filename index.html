@@ -3,24 +3,79 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DashControl Business - Dados (LocalStorage)</title>
+  <title>DashControl Business</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+
   <style>
-    body { margin:0; font-family:'Poppins', sans-serif; background:#0d0d0d; color:white; }
-    header { background:linear-gradient(90deg,#8e44ad,#b8860b); padding:15px; font-size:22px; font-weight:700; text-align:center; }
-    h2 { color:#d4af37; margin:20px 0; text-align:center; }
-    section { background:#1a1a1a; padding:20px; margin:20px auto; border-radius:12px; max-width:900px; box-shadow:0 4px 20px rgba(0,0,0,0.6); }
-    label { display:block; margin:10px 0 5px; font-weight:600; color:#d4af37; }
-    input, select { padding:10px; border-radius:6px; border:none; width:100%; background:#2c2c2c; color:white; font-size:14px; }
-    .actions { text-align:center; margin-top:15px; }
-    button.btn { background:#8e44ad; padding:12px 20px; margin:8px; border:none; border-radius:8px; color:white; font-weight:bold; cursor:pointer; transition:0.3s; }
-    button.btn:hover { background:#b8860b; transform:scale(1.05); }
-    .row { display:flex; flex-wrap:wrap; gap:15px; }
-    .col { flex:1; min-width:200px; }
-    .hidden { display:none; }
-    .list-item { display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid #2c2c2c; }
-    .list-item:last-child { border-bottom: none; }
-    .list-container { margin-top:15px; padding:10px; background:#2c2c2c; border-radius:8px; }
+    body { margin:0; font-family:'Poppins', sans-serif; background:#0d0d0d; color:white; text-align:center; }
+    header { background:linear-gradient(90deg,#8e44ad,#b8860b); padding:15px; font-size:24px; font-weight:700; box-shadow:0 4px 10px rgba(0,0,0,.4); }
+
+    /* Splash */
+    .splash {
+      position:fixed; top:0; left:0; width:100%; height:100%;
+      background:linear-gradient(135deg,#0d0d0d,#8e44ad,#b8860b);
+      display:flex; align-items:center; justify-content:center; flex-direction:column;
+      font-size:2.5rem; font-weight:bold; z-index:9999; color:#fff;
+      transition:opacity 1s ease-out;
+    }
+    .splash small { font-size:1rem; margin-top:10px; color:#ddd; }
+    .splash.fade-out { opacity:0; pointer-events:none; }
+
+    /* Home */
+    .home { display:none; padding:30px; }
+    h1 { color:#d4af37; margin-bottom:15px; }
+    p { color:#ddd; }
+
+    .cards {
+      display:flex; justify-content:center; gap:25px; flex-wrap:wrap; margin-top:40px;
+    }
+    .card {
+      background:#1a1a1a; border-radius:12px; padding:30px; width:220px; height:160px;
+      cursor:pointer; box-shadow:0 4px 20px rgba(0,0,0,.6);
+      transition:.3s; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    }
+    .card:hover { transform:scale(1.05); background:#2c2c2c; }
+    .card .icon { font-size:2.5rem; }
+    .card h3 { margin-top:10px; color:#d4af37; }
   </style>
 </head>
 <body>
+
+  <!-- Splash -->
+  <div id="splash" class="splash">
+    🚀 DashControl
+    <small>Carregando seu painel de controle...</small>
+  </div>
+
+  <!-- Home -->
+  <div id="home" class="home">
+    <header>📊 DashControl Business</header>
+    <h1>Bem-vindo!</h1>
+    <p>Escolha uma das opções abaixo para começar:</p>
+
+    <div class="cards">
+      <div class="card" onclick="location.href='dados.html'">
+        <div class="icon">⚙️</div>
+        <h3>Gerenciar Dados</h3>
+      </div>
+      <div class="card" onclick="location.href='dashboard.html'">
+        <div class="icon">📈</div>
+        <h3>Visualizar Dashboard</h3>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase -->
+  <script type="module" src="firebase.js"></script>
+  <script>
+    // Controle da splash
+    const splash=document.getElementById('splash');
+    const home=document.getElementById('home');
+    setTimeout(()=> splash.classList.add('fade-out'),2000);
+    splash.addEventListener('transitionend',()=> {
+      splash.style.display='none';
+      home.style.display='block';
+    }, {once:true});
+  </script>
+</body>
+</html>
