@@ -13,6 +13,7 @@
     header { background:linear-gradient(90deg,#8e44ad,#b8860b); padding:15px; font-size:22px; font-weight:700; text-align:center; }
     .chart-card { background:#1a1a1a; border-radius:12px; padding:15px; margin:20px auto; box-shadow:0 4px 20px rgba(0,0,0,0.6); max-width:1200px; }
     .chart { width:100%; height:400px; }
+    .no-data-message { text-align: center; color: #aaa; padding: 20px; }
   </style>
 </head>
 <body>
@@ -30,28 +31,37 @@
   import { db } from "./firebase.js";
   import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
+  // Cache para as instâncias do ECharts
+  const charts = {};
+
   function renderChart(elementId, option) {
-    const chart = echarts.init(document.getElementById(elementId));
-    chart.setOption(option);
-    window.addEventListener("resize", () => chart.resize());
+    if (!charts[elementId]) {
+      charts[elementId] = echarts.init(document.getElementById(elementId));
+      window.addEventListener("resize", () => charts[elementId].resize());
+    }
+    charts[elementId].setOption(option);
+  }
+
+  function showNoDataMessage(elementId, message) {
+    const element = document.getElementById(elementId);
+    if (element) {
+      element.innerHTML = `<div class="no-data-message">${message}</div>`;
+    }
   }
 
   async function carregarDados() {
     try {
       // 🔹 Vendas
       const vendasSnap = await getDocs(collection(db, "vendas"));
-      let vendas = [];
-      vendasSnap.forEach(doc => vendas.push(doc.data()));
+      let vendas = vendasSnap.docs.map(doc => doc.data());
 
       // 🔹 Estoque
       const estoqueSnap = await getDocs(collection(db, "estoque"));
-      let estoque = [];
-      estoqueSnap.forEach(doc => estoque.push(doc.data()));
+      let estoque = estoqueSnap.docs.map(doc => doc.data());
 
       // 🔹 Financeiro
       const finSnap = await getDocs(collection(db, "financeiro"));
-      let financeiro = [];
-      finSnap.forEach(doc => financeiro.push(doc.data()));
+      let financeiro = finSnap.docs.map(doc => doc.data());
 
       montarGraficos(vendas, estoque, financeiro);
     } catch (e) {
@@ -61,61 +71,90 @@
   }
 
   function montarGraficos(vendas, estoque, financeiro) {
-    // Vendas por Produto
+    // 🛒 Vendas por Produto (contagem)
     if (vendas.length > 0) {
-      let vendasPorProduto = {};
-      vendas.forEach(v => vendasPorProduto[v.produto] = (vendasPorProduto[v.produto] || 0) + v.valor);
+      let contagemVendasPorProduto = {};
+      vendas.forEach(v => {
+        const produtoNome = v.produto;
+        if (produtoNome) {
+          contagemVendasPorProduto[produtoNome] = (contagemVendasPorProduto[produtoNome] || 0) + 1;
+        }
+      });
+      const produtosData = Object.keys(contagemVendasPorProduto).map(p => ({
+        name: p,
+        value: contagemVendasPorProduto[p]
+      }));
 
       renderChart("chartVendas", {
-        title:{text:"🛒 Vendas por Produto", textStyle:{color:'#d4af37'}},
-        xAxis:{type:"category", data:Object.keys(vendasPorProduto), axisLabel:{color:'#fff'}},
-        yAxis:{type:"value", axisLabel:{color:'#fff'}},
-        series:[{type:"bar", data:Object.values(vendasPorProduto), itemStyle:{color:"#8e44ad"}, label:{show:true, color:"#fff"}}]
+        title:{text:"🛒 Vendas por Produto (Contagem)", textStyle:{color:'#d4af37'}},
+        tooltip: { trigger: 'item', formatter: "{b}: {c} unidades" },
+        series:[{type:"pie", radius:["40%","70%"], data:produtosData, label:{color:'#fff'}}]
       });
+    } else {
+      showNoDataMessage("chartVendas", "Nenhuma venda registrada.");
     }
 
-    // Estoque Atual
+    // 📦 Estoque Atual
     if (estoque.length > 0) {
+      const estoqueNomes = estoque.map(e => e.nome);
+      const estoqueQtds = estoque.map(e => e.quantidade || 0);
       renderChart("chartEstoque", {
         title:{text:"📦 Estoque Atual", textStyle:{color:'#d4af37'}},
-        xAxis:{type:"category", data:estoque.map(e=>e.nome), axisLabel:{color:'#fff'}},
+        tooltip: { trigger: 'item' },
+        xAxis:{type:"category", data:estoqueNomes, axisLabel:{color:'#fff'}},
         yAxis:{type:"value", axisLabel:{color:'#fff'}},
-        series:[{type:"bar", data:estoque.map(e=>e.quantidade ?? 0), itemStyle:{color:"#1abc9c"}, label:{show:true, color:"#fff"}}]
+        series:[{type:"bar", data:estoqueQtds, itemStyle:{color:"#1abc9c"}, label:{show:true, color:"#fff"}}]
       });
+    } else {
+      showNoDataMessage("chartEstoque", "Nenhum produto no estoque.");
     }
 
-    // Financeiro (Entradas x Saídas)
+    // 💰 Financeiro (Entradas x Saídas)
     if (financeiro.length > 0) {
-      let entradas = financeiro.reduce((s,f)=>s+(f.entrada||0),0);
-      let saidas = financeiro.reduce((s,f)=>s+(f.saida||0),0);
+      const entradas = financeiro.reduce((s,f)=>s+(f.entrada||0),0);
+      const saidas = financeiro.reduce((s,f)=>s+(f.saida||0),0);
       renderChart("chartFinanceiro", {
         title:{text:"💰 Entradas x Saídas", textStyle:{color:'#d4af37'}},
-        xAxis:{type:"category", data:["Entradas","Saídas"], axisLabel:{color:'#fff'}},
-        yAxis:{type:"value", axisLabel:{color:'#fff'}},
-        series:[{type:"bar", data:[entradas,saidas], itemStyle:{color:"#b8860b"}, label:{show:true, color:"#fff"}}]
+        tooltip: { trigger: 'item' },
+        series:[{type:"pie", radius:["40%","70%"], data:[{name:"Entradas", value:entradas},{name:"Saídas", value:saidas}], label:{color:'#fff'}}]
       });
+    } else {
+      showNoDataMessage("chartFinanceiro", "Nenhum dado financeiro.");
     }
 
-    // Formas de Pagamento
+    // 💳 Formas de Pagamento
     if (vendas.length > 0) {
       let formas = {};
-      vendas.forEach(v => formas[v.pagamento]=(formas[v.pagamento]||0)+v.valor);
+      vendas.forEach(v => formas[v.pagamento] = (formas[v.pagamento] || 0) + v.valor);
+      const pagamentosData = Object.keys(formas).map(f => ({
+        name: f,
+        value: formas[f]
+      }));
       renderChart("chartPagamentos", {
         title:{text:"💳 Formas de Pagamento", textStyle:{color:'#d4af37'}},
-        series:[{type:"pie", radius:["40%","70%"], data:Object.keys(formas).map(f=>({name:f,value:formas[f]})), label:{color:"#fff"}}]
+        tooltip: { trigger: 'item' },
+        series:[{type:"pie", radius:["40%","70%"], data:pagamentosData, label:{color:"#fff"}}]
       });
+    } else {
+      showNoDataMessage("chartPagamentos", "Nenhuma venda registrada.");
     }
 
-    // Receita ao Longo do Tempo
+    // 📈 Receita ao Longo do Tempo
     if (vendas.length > 0) {
       let porData = {};
-      vendas.forEach(v => { porData[v.data]=(porData[v.data]||0)+v.valor; });
+      vendas.forEach(v => { porData[v.data] = (porData[v.data] || 0) + v.valor; });
+      const datas = Object.keys(porData).sort();
+      const valores = datas.map(d => porData[d]);
+
       renderChart("chartLinha", {
         title:{text:"📈 Receita ao Longo do Tempo", textStyle:{color:'#d4af37'}},
-        xAxis:{type:"category", data:Object.keys(porData), axisLabel:{color:'#fff'}},
+        tooltip: { trigger: 'axis' },
+        xAxis:{type:"category", data:datas, axisLabel:{color:'#fff'}},
         yAxis:{type:"value", axisLabel:{color:'#fff'}},
-        series:[{type:"line", data:Object.values(porData), smooth:true, itemStyle:{color:"#d4af37"}}]
+        series:[{type:"line", data:valores, smooth:true, itemStyle:{color:"#d4af37"}}]
       });
+    } else {
+      showNoDataMessage("chartLinha", "Nenhuma venda para exibir a receita.");
     }
   }
 
