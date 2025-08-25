@@ -6,6 +6,8 @@
   <title>DashControl Business - Dashboard</title>
 
   <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 
   <style>
@@ -14,24 +16,42 @@
     .chart-card { background:#1a1a1a; border-radius:12px; padding:15px; margin:20px auto; box-shadow:0 4px 20px rgba(0,0,0,0.6); max-width:1200px; }
     .chart { width:100%; height:400px; }
     .no-data-message { text-align: center; color: #aaa; padding: 20px; }
+    .export-btn-container { text-align: center; margin: 20px auto; max-width: 1200px; }
+    #btnExportar {
+      background: #e74c3c;
+      padding: 12px 25px;
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 16px;
+      transition: 0.3s;
+    }
+    #btnExportar:hover { background: #c0392b; }
   </style>
 </head>
 <body>
 
 <header>📊 DashControl Business - Dashboard</header>
 
-<div class="chart-card"><div id="chartVendas" class="chart"></div></div>
-<div class="chart-card"><div id="chartEstoque" class="chart"></div></div>
-<div class="chart-card"><div id="chartFinanceiro" class="chart"></div></div>
-<div class="chart-card"><div id="chartPagamentos" class="chart"></div></div>
-<div class="chart-card"><div id="chartLinha" class="chart"></div></div>
+<div class="export-btn-container">
+    <button id="btnExportar">Baixar Relatório em PDF</button>
+</div>
+
+<div id="dashboardContent">
+    <div class="chart-card"><div id="chartVendas" class="chart"></div></div>
+    <div class="chart-card"><div id="chartEstoque" class="chart"></div></div>
+    <div class="chart-card"><div id="chartFinanceiro" class="chart"></div></div>
+    <div class="chart-card"><div id="chartPagamentos" class="chart"></div></div>
+    <div class="chart-card"><div id="chartLinha" class="chart"></div></div>
+</div>
 
 <script type="module">
   // Importação do Firebase
   import { db } from "./firebase.js";
   import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-  // Cache para as instâncias do ECharts
   const charts = {};
 
   function renderChart(elementId, option) {
@@ -51,15 +71,12 @@
 
   async function carregarDados() {
     try {
-      // 🔹 Vendas
       const vendasSnap = await getDocs(collection(db, "vendas"));
       let vendas = vendasSnap.docs.map(doc => doc.data());
 
-      // 🔹 Estoque
       const estoqueSnap = await getDocs(collection(db, "estoque"));
       let estoque = estoqueSnap.docs.map(doc => doc.data());
 
-      // 🔹 Financeiro
       const finSnap = await getDocs(collection(db, "financeiro"));
       let financeiro = finSnap.docs.map(doc => doc.data());
 
@@ -158,6 +175,29 @@
     }
   }
 
+  // Função para exportar o dashboard como PDF
+  function exportarPDF() {
+    // Esconder o botão de exportar durante a criação do PDF
+    document.getElementById('btnExportar').style.display = 'none';
+
+    const element = document.getElementById('dashboardContent');
+    const options = {
+      filename: 'Relatorio-DashControl.pdf',
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, logging: true, dpi: 192, letterRendering: true },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    html2pdf().set(options).from(element).save().then(() => {
+        // Mostrar o botão de exportar novamente após a conclusão
+        document.getElementById('btnExportar').style.display = 'block';
+    });
+  }
+
+  // Evento para o botão de exportar
+  document.getElementById('btnExportar').addEventListener('click', exportarPDF);
+
+  // Início do carregamento dos dados
   carregarDados();
 </script>
 
