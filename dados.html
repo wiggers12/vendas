@@ -36,7 +36,7 @@
   <input type="number" id="vendaValor" readonly>
 
   <label>Forma de Pagamento:</label>
-  <select id="vendaPagamento" onchange="toggleTroco()">
+  <select id="vendaPagamento">
     <option value="Pix">⚡ Pix</option>
     <option value="Débito">💳 Débito</option>
     <option value="Crédito">💳 Crédito</option>
@@ -52,7 +52,7 @@
   <input type="date" id="vendaData" />
 
   <div class="actions">
-    <button class="btn" type="button" onclick="appState.registrarVenda()">💾 Registrar Venda</button>
+    <button class="btn" type="button" id="btnRegistrarVenda">💾 Registrar Venda</button>
   </div>
 </section>
 
@@ -68,7 +68,7 @@
   <input type="number" id="estoqueQtd">
 
   <div class="actions">
-    <button class="btn" type="button" onclick="appState.adicionarEstoque()">➕ Adicionar</button>
+    <button class="btn" type="button" id="btnAdicionarEstoque">➕ Adicionar</button>
   </div>
   
   <div class="list-container">
@@ -83,7 +83,7 @@
   <input type="number" id="caixaInicial">
 
   <div class="actions">
-    <button class="btn" type="button" onclick="appState.definirCaixa()">💾 Definir Caixa Inicial</button>
+    <button class="btn" type="button" id="btnDefinirCaixa">💾 Definir Caixa Inicial</button>
   </div>
 
   <div class="row">
@@ -98,7 +98,7 @@
   <label>Filtrar por data:</label>
   <input type="date" id="filtroDataRelatorio">
   <div class="actions">
-    <button class="btn" type="button" onclick="appState.gerarRelatorio()">Gerar Relatório</button>
+    <button class="btn" type="button" id="btnGerarRelatorio">Gerar Relatório</button>
   </div>
   <div id="relatorioResultado" class="list-container"></div>
 </section>
@@ -157,9 +157,15 @@ const appState = {
       div.className = "list-item";
       div.innerHTML = `
         <span>${item.nome} - R$${item.valor.toFixed(2)} (${item.quantidade !== null ? `Qtd: ${item.quantidade}` : 'Serviço'})</span>
-        <button class="btn" type="button" onclick="appState.removerItem('estoque', ${index})">Remover</button>
+        <button class="btn btn-remover" type="button" data-index="${index}">Remover</button>
       `;
       lista.appendChild(div);
+    });
+    document.querySelectorAll(".btn-remover").forEach(button => {
+      button.addEventListener("click", (e) => {
+        const index = e.target.getAttribute("data-index");
+        this.removerItem('estoque', index);
+      });
     });
   },
 
@@ -292,8 +298,6 @@ const appState = {
     this.load();
     document.getElementById("vendaData").value = new Date().toISOString().split("T")[0];
     this.updateUI();
-    document.getElementById("vendaProduto").addEventListener("change", this.atualizarValorVenda.bind(this));
-    document.getElementById("vendaPagamento").addEventListener("change", toggleTroco);
   }
 };
 
@@ -302,10 +306,17 @@ function toggleTroco() {
   document.getElementById("trocoArea").classList.toggle("hidden", pagamento !== "Dinheiro");
 }
 
-window.onload = () => {
+document.addEventListener("DOMContentLoaded", () => {
   appState.init();
-};
-</script>
 
+  // Escutadores de evento
+  document.getElementById("vendaProduto").addEventListener("change", appState.atualizarValorVenda.bind(appState));
+  document.getElementById("vendaPagamento").addEventListener("change", toggleTroco);
+  document.getElementById("btnRegistrarVenda").addEventListener("click", appState.registrarVenda.bind(appState));
+  document.getElementById("btnAdicionarEstoque").addEventListener("click", appState.adicionarEstoque.bind(appState));
+  document.getElementById("btnDefinirCaixa").addEventListener("click", appState.definirCaixa.bind(appState));
+  document.getElementById("btnGerarRelatorio").addEventListener("click", appState.gerarRelatorio.bind(appState));
+});
+</script>
 </body>
 </html>
