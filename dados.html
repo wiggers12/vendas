@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DashControl Business - Dados (LocalStorage)</title>
+  <title>DashControl Business - Dados (Firebase)</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
     body { margin:0; font-family:'Poppins', sans-serif; background:#0d0d0d; color:white; }
@@ -103,220 +103,240 @@
   <div id="relatorioResultado" class="list-container"></div>
 </section>
 
-<script>
-const appState = {
-  data: { vendas: [], estoque: [], financeiro: [] },
+<script type="module">
+  import { db } from "./firebase.js";
+  import { collection, getDocs, addDoc, updateDoc, doc, deleteDoc, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-  load() {
-    this.data = JSON.parse(localStorage.getItem("dashBusiness")) || { vendas: [], estoque: [], financeiro: [] };
-  },
+  const appState = {
+    data: { vendas: [], estoque: [], financeiro: [] },
 
-  save() {
-    localStorage.setItem("dashBusiness", JSON.stringify(this.data));
-    this.updateUI();
-  },
-  
-  updateUI() {
-    this.atualizarSelect();
-    this.atualizarEstoqueUI();
-    this.atualizarFinanceiroUI();
-  },
+    async load() {
+      // Carrega os dados de forma assíncrona do Firebase
+      const [vendasSnap, estoqueSnap, financeiroSnap] = await Promise.all([
+        getDocs(collection(db, "vendas")),
+        getDocs(collection(db, "estoque")),
+        getDocs(collection(db, "financeiro"))
+      ]);
+      
+      this.data.vendas = vendasSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      this.data.estoque = estoqueSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      this.data.financeiro = financeiroSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      
+      this.updateUI();
+    },
 
-  atualizarValorVenda() {
-    const i = document.getElementById("vendaProduto").value;
-    if (i !== "") {
-      document.getElementById("vendaValor").value = this.data.estoque[i].valor.toFixed(2);
-    }
-  },
+    updateUI() {
+      this.atualizarSelect();
+      this.atualizarEstoqueUI();
+      this.atualizarFinanceiroUI();
+    },
 
-  atualizarSelect() {
-    const sel = document.getElementById("vendaProduto");
-    sel.innerHTML = "";
-    this.data.estoque.forEach((p, i) => {
-      const opt = document.createElement("option");
-      opt.value = i;
-      opt.text = `${p.nome} - R$${p.valor.toFixed(2)}` + (p.quantidade !== null ? ` (Qtd: ${p.quantidade})` : ` (Serviço)`);
-      sel.appendChild(opt);
-    });
-    if (this.data.estoque.length > 0) {
-      this.atualizarValorVenda();
-    } else {
-      document.getElementById("vendaValor").value = "";
-    }
-  },
+    atualizarValorVenda() {
+      const i = document.getElementById("vendaProduto").value;
+      if (i !== "") {
+        const produto = this.data.estoque.find(p => p.id === i);
+        if (produto) {
+          document.getElementById("vendaValor").value = produto.valor.toFixed(2);
+        }
+      }
+    },
 
-  atualizarEstoqueUI() {
-    const lista = document.getElementById("listaEstoque");
-    lista.innerHTML = "";
-    if (this.data.estoque.length === 0) {
-      lista.innerHTML = "<p style='text-align:center;'>Nenhum item cadastrado.</p>";
-      return;
-    }
-    this.data.estoque.forEach((item, index) => {
-      const div = document.createElement("div");
-      div.className = "list-item";
-      div.innerHTML = `
-        <span>${item.nome} - R$${item.valor.toFixed(2)} (${item.quantidade !== null ? `Qtd: ${item.quantidade}` : 'Serviço'})</span>
-        <button class="btn btn-remover" type="button" data-index="${index}">Remover</button>
-      `;
-      lista.appendChild(div);
-    });
-    document.querySelectorAll(".btn-remover").forEach(button => {
-      button.addEventListener("click", (e) => {
-        const index = e.target.getAttribute("data-index");
-        this.removerItem('estoque', index);
+    atualizarSelect() {
+      const sel = document.getElementById("vendaProduto");
+      sel.innerHTML = "";
+      this.data.estoque.forEach(p => {
+        const opt = document.createElement("option");
+        opt.value = p.id;
+        opt.text = `${p.nome} - R$${p.valor.toFixed(2)}` + (p.quantidade !== null ? ` (Qtd: ${p.quantidade})` : ` (Serviço)`);
+        sel.appendChild(opt);
       });
-    });
-  },
+      if (this.data.estoque.length > 0) {
+        this.atualizarValorVenda();
+      } else {
+        document.getElementById("vendaValor").value = "";
+      }
+    },
 
-  atualizarFinanceiroUI() {
-    const entradas = this.data.financeiro.reduce((s, f) => s + (f.entrada || 0), 0);
-    const saidas = this.data.financeiro.reduce((s, f) => s + (f.saida || 0), 0);
-    const saldo = entradas - saidas;
-    
-    document.getElementById("finEntradas").innerText = entradas.toFixed(2);
-    document.getElementById("finSaidas").innerText = saidas.toFixed(2);
-    document.getElementById("finSaldo").innerText = saldo.toFixed(2);
-  },
+    atualizarEstoqueUI() {
+      const lista = document.getElementById("listaEstoque");
+      lista.innerHTML = "";
+      if (this.data.estoque.length === 0) {
+        lista.innerHTML = "<p style='text-align:center;'>Nenhum item cadastrado.</p>";
+        return;
+      }
+      this.data.estoque.forEach(item => {
+        const div = document.createElement("div");
+        div.className = "list-item";
+        div.innerHTML = `
+          <span>${item.nome} - R$${item.valor.toFixed(2)} (${item.quantidade !== null ? `Qtd: ${item.quantidade}` : 'Serviço'})</span>
+          <button class="btn btn-remover" type="button" data-id="${item.id}">Remover</button>
+        `;
+        lista.appendChild(div);
+      });
+      document.querySelectorAll(".btn-remover").forEach(button => {
+        button.addEventListener("click", async (e) => {
+          const id = e.target.getAttribute("data-id");
+          await this.removerItem('estoque', id);
+        });
+      });
+    },
 
-  removerItem(categoria, index) {
-    if (confirm(`Tem certeza que deseja remover este item?`)) {
-      this.data[categoria].splice(index, 1);
-      this.save();
+    atualizarFinanceiroUI() {
+      const entradas = this.data.financeiro.reduce((s, f) => s + (f.entrada || 0), 0);
+      const saidas = this.data.financeiro.reduce((s, f) => s + (f.saida || 0), 0);
+      const saldo = entradas - saidas;
+      
+      document.getElementById("finEntradas").innerText = entradas.toFixed(2);
+      document.getElementById("finSaidas").innerText = saidas.toFixed(2);
+      document.getElementById("finSaldo").innerText = saldo.toFixed(2);
+    },
+
+    async removerItem(categoria, id) {
+      if (confirm(`Tem certeza que deseja remover este item?`)) {
+        await deleteDoc(doc(db, categoria, id));
+        this.load();
+      }
+    },
+
+    async registrarVenda() {
+      const produtoId = document.getElementById("vendaProduto").value;
+      if (!produtoId) { alert("⚠️ Selecione um produto!"); return; }
+      
+      const produto = this.data.estoque.find(p => p.id === produtoId);
+      const valor = parseFloat(document.getElementById("vendaValor").value) || 0;
+      const pagamento = document.getElementById("vendaPagamento").value;
+      const data = document.getElementById("vendaData").value || new Date().toISOString().split('T')[0];
+
+      if (valor <= 0) { alert("⚠️ O valor da venda deve ser maior que zero!"); return; }
+      
+      let troco = 0;
+      if (pagamento === "Dinheiro") {
+        const recebido = parseFloat(document.getElementById("valorRecebido").value) || 0;
+        if (recebido < valor) { alert("⚠️ Valor recebido insuficiente!"); return; }
+        troco = recebido - valor;
+      }
+
+      if (produto.quantidade !== null && produto.quantidade <= 0) {
+        alert("⚠️ Produto fora de estoque!");
+        return;
+      }
+
+      // Adiciona a venda e a transação financeira
+      await addDoc(collection(db, "vendas"), { produto: produto.nome, valor, pagamento, troco, data });
+      await addDoc(collection(db, "financeiro"), { entrada: valor, saida: troco, data });
+
+      // Atualiza a quantidade em estoque (se for um produto físico)
+      if (produto.quantidade !== null) {
+        const novoEstoque = produto.quantidade - 1;
+        await updateDoc(doc(db, "estoque", produtoId), { quantidade: novoEstoque });
+      }
+
+      this.load();
+      alert("✅ Venda registrada!");
+      document.getElementById("valorRecebido").value = "";
+      document.getElementById("relatorioResultado").innerHTML = "";
+    },
+
+    async adicionarEstoque() {
+      const nome = document.getElementById("estoqueNome").value.trim();
+      const valor = parseFloat(document.getElementById("estoqueValor").value);
+      const qtdInput = document.getElementById("estoqueQtd").value;
+      
+      if (!nome || isNaN(valor) || valor < 0) {
+        alert("⚠️ Preencha nome e valor unitário com valores válidos!");
+        return;
+      }
+      const quantidade = qtdInput === "" ? null : parseInt(qtdInput);
+      if (quantidade !== null && (isNaN(quantidade) || quantidade < 0)) {
+        alert("⚠️ A quantidade deve ser um número inteiro e não negativo!");
+        return;
+      }
+      
+      await addDoc(collection(db, "estoque"), { nome, valor, quantidade });
+      this.load();
+
+      document.getElementById("estoqueNome").value = "";
+      document.getElementById("estoqueValor").value = "";
+      document.getElementById("estoqueQtd").value = "";
+
+      alert("✅ Produto/Serviço cadastrado!");
+    },
+
+    async definirCaixa() {
+      const inicial = parseFloat(document.getElementById("caixaInicial").value) || 0;
+      if (isNaN(inicial) || inicial < 0) {
+        alert("⚠️ O valor inicial deve ser um número válido e não negativo!");
+        return;
+      }
+      
+      // Limpa a coleção 'financeiro' e adiciona o valor inicial
+      const finQuery = await getDocs(collection(db, "financeiro"));
+      finQuery.forEach(async (docRef) => await deleteDoc(doc(db, "financeiro", docRef.id)));
+
+      await addDoc(collection(db, "financeiro"), { entrada: inicial, saida: 0, data: new Date().toISOString().split('T')[0] });
+      this.load();
+      
+      alert("✅ Caixa inicial definido!");
+    },
+
+    async gerarRelatorio() {
+      const dataFiltro = document.getElementById("filtroDataRelatorio").value;
+      if (!dataFiltro) {
+        document.getElementById("relatorioResultado").innerHTML = "<p style='text-align:center;'>Selecione uma data para gerar o relatório.</p>";
+        return;
+      }
+
+      const q = query(collection(db, "vendas"), where("data", "==", dataFiltro));
+      const querySnap = await getDocs(q);
+      const vendasFiltradas = querySnap.docs.map(doc => doc.data());
+      
+      const resultado = document.getElementById("relatorioResultado");
+      resultado.innerHTML = "";
+
+      if (vendasFiltradas.length === 0) {
+        resultado.innerHTML = "<p style='text-align:center;'>Nenhuma venda encontrada para a data selecionada.</p>";
+        return;
+      }
+
+      let totalVendas = 0;
+      vendasFiltradas.forEach(v => totalVendas += v.valor);
+
+      const relatorioHTML = `
+        <h3>Resumo do dia ${dataFiltro}</h3>
+        <p><strong>Total de Vendas:</strong> R$${totalVendas.toFixed(2)}</p>
+        <p><strong>Número de Vendas:</strong> ${vendasFiltradas.length}</p>
+        <h4>Detalhes das Vendas:</h4>
+        ${vendasFiltradas.map(venda => `
+          <div class="list-item">
+            <span>${venda.produto} - R$${venda.valor.toFixed(2)} (${venda.pagamento})</span>
+          </div>
+        `).join('')}
+      `;
+      resultado.innerHTML = relatorioHTML;
+    },
+
+    init() {
+      document.getElementById("vendaData").value = new Date().toISOString().split("T")[0];
+      this.load();
     }
-  },
+  };
 
-  registrarVenda() {
-    const i = document.getElementById("vendaProduto").value;
-    if (i === "") { alert("⚠️ Selecione um produto!"); return; }
-    
-    const produto = this.data.estoque[i];
-    const valor = parseFloat(document.getElementById("vendaValor").value) || 0;
+  function toggleTroco() {
     const pagamento = document.getElementById("vendaPagamento").value;
-    const data = document.getElementById("vendaData").value || new Date().toISOString().split('T')[0];
-
-    if (valor <= 0) { alert("⚠️ O valor da venda deve ser maior que zero!"); return; }
-    
-    let troco = 0;
-    if (pagamento === "Dinheiro") {
-      const recebido = parseFloat(document.getElementById("valorRecebido").value) || 0;
-      if (recebido < valor) { alert("⚠️ Valor recebido insuficiente!"); return; }
-      troco = recebido - valor;
-    }
-
-    if (produto.quantidade !== null && produto.quantidade <= 0) {
-      alert("⚠️ Produto fora de estoque!");
-      return;
-    }
-
-    if (produto.quantidade !== null) {
-      produto.quantidade--;
-    }
-
-    this.data.vendas.push({ produto: produto.nome, valor, pagamento, troco, data });
-    this.data.financeiro.push({ entrada: valor, saida: troco, data });
-
-    this.save();
-    alert("✅ Venda registrada!");
-    document.getElementById("valorRecebido").value = "";
-    document.getElementById("relatorioResultado").innerHTML = "";
-  },
-
-  adicionarEstoque() {
-    const nome = document.getElementById("estoqueNome").value.trim();
-    const valor = parseFloat(document.getElementById("estoqueValor").value);
-    const qtdInput = document.getElementById("estoqueQtd").value;
-    
-    if (!nome || isNaN(valor) || valor < 0) {
-      alert("⚠️ Preencha nome e valor unitário com valores válidos!");
-      return;
-    }
-    const quantidade = qtdInput === "" ? null : parseInt(qtdInput);
-    if (quantidade !== null && (isNaN(quantidade) || quantidade < 0)) {
-      alert("⚠️ A quantidade deve ser um número inteiro e não negativo!");
-      return;
-    }
-
-    this.data.estoque.push({ nome, valor, quantidade });
-    this.save();
-
-    document.getElementById("estoqueNome").value = "";
-    document.getElementById("estoqueValor").value = "";
-    document.getElementById("estoqueQtd").value = "";
-
-    alert("✅ Produto/Serviço cadastrado!");
-  },
-
-  definirCaixa() {
-    const inicial = parseFloat(document.getElementById("caixaInicial").value) || 0;
-    if (isNaN(inicial) || inicial < 0) {
-      alert("⚠️ O valor inicial deve ser um número válido e não negativo!");
-      return;
-    }
-    
-    this.data.financeiro = [];
-    this.data.financeiro.push({ entrada: inicial, saida: 0, data: new Date().toISOString().split('T')[0] });
-    this.save();
-    
-    alert("✅ Caixa inicial definido!");
-  },
-
-  gerarRelatorio() {
-    const dataFiltro = document.getElementById("filtroDataRelatorio").value;
-    const vendasFiltradas = this.data.vendas.filter(venda => venda.data === dataFiltro);
-    const resultado = document.getElementById("relatorioResultado");
-    resultado.innerHTML = "";
-
-    if (!dataFiltro) {
-      resultado.innerHTML = "<p style='text-align:center;'>Selecione uma data para gerar o relatório.</p>";
-      return;
-    }
-
-    if (vendasFiltradas.length === 0) {
-      resultado.innerHTML = "<p style='text-align:center;'>Nenhuma venda encontrada para a data selecionada.</p>";
-      return;
-    }
-
-    let totalVendas = 0;
-    vendasFiltradas.forEach(v => totalVendas += v.valor);
-
-    const relatorioHTML = `
-      <h3>Resumo do dia ${dataFiltro}</h3>
-      <p><strong>Total de Vendas:</strong> R$${totalVendas.toFixed(2)}</p>
-      <p><strong>Número de Vendas:</strong> ${vendasFiltradas.length}</p>
-      <h4>Detalhes das Vendas:</h4>
-      ${vendasFiltradas.map(venda => `
-        <div class="list-item">
-          <span>${venda.produto} - R$${venda.valor.toFixed(2)} (${venda.pagamento})</span>
-        </div>
-      `).join('')}
-    `;
-    resultado.innerHTML = relatorioHTML;
-  },
-
-  init() {
-    this.load();
-    document.getElementById("vendaData").value = new Date().toISOString().split("T")[0];
-    this.updateUI();
+    document.getElementById("trocoArea").classList.toggle("hidden", pagamento !== "Dinheiro");
   }
-};
 
-function toggleTroco() {
-  const pagamento = document.getElementById("vendaPagamento").value;
-  document.getElementById("trocoArea").classList.toggle("hidden", pagamento !== "Dinheiro");
-}
+  document.addEventListener("DOMContentLoaded", () => {
+    appState.init();
 
-document.addEventListener("DOMContentLoaded", () => {
-  appState.init();
-
-  // Escutadores de evento
-  document.getElementById("vendaProduto").addEventListener("change", appState.atualizarValorVenda.bind(appState));
-  document.getElementById("vendaPagamento").addEventListener("change", toggleTroco);
-  document.getElementById("btnRegistrarVenda").addEventListener("click", appState.registrarVenda.bind(appState));
-  document.getElementById("btnAdicionarEstoque").addEventListener("click", appState.adicionarEstoque.bind(appState));
-  document.getElementById("btnDefinirCaixa").addEventListener("click", appState.definirCaixa.bind(appState));
-  document.getElementById("btnGerarRelatorio").addEventListener("click", appState.gerarRelatorio.bind(appState));
-});
+    // Escutadores de evento
+    document.getElementById("vendaProduto").addEventListener("change", appState.atualizarValorVenda.bind(appState));
+    document.getElementById("vendaPagamento").addEventListener("change", toggleTroco);
+    document.getElementById("btnRegistrarVenda").addEventListener("click", appState.registrarVenda.bind(appState));
+    document.getElementById("btnAdicionarEstoque").addEventListener("click", appState.adicionarEstoque.bind(appState));
+    document.getElementById("btnDefinirCaixa").addEventListener("click", appState.definirCaixa.bind(appState));
+    document.getElementById("btnGerarRelatorio").addEventListener("click", appState.gerarRelatorio.bind(appState));
+  });
 </script>
 </body>
 </html>
