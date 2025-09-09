@@ -26,6 +26,13 @@
     h1 { color:#d4af37; margin-bottom:15px; }
     p { color:#ddd; }
 
+    /* Login */
+    #loginArea { margin:20px auto; padding:20px; background:#1a1a1a; border-radius:12px; width:320px; }
+    #loginArea input { width:90%; padding:10px; margin:5px 0; border-radius:8px; border:none; }
+    #loginArea button { padding:10px 20px; margin:5px; border:none; border-radius:8px; cursor:pointer; background:#8e44ad; color:white; }
+    #loginArea button:hover { background:#b8860b; }
+
+    /* Cards */
     .cards {
       display:flex; justify-content:center; gap:25px; flex-wrap:wrap; margin-top:40px;
     }
@@ -39,7 +46,7 @@
     .card h3 { margin-top:10px; color:#d4af37; }
 
     /* Área de pagamento */
-    #pagamento { margin:40px auto; padding:20px; background:#1a1a1a; border-radius:12px; width:320px; }
+    #pagamento { margin:40px auto; padding:20px; background:#1a1a1a; border-radius:12px; width:320px; display:none; }
     #pagamento h2 { color:#d4af37; margin-bottom:10px; }
   </style>
 </head>
@@ -55,7 +62,17 @@
   <div id="home" class="home">
     <header>📊 DashControl Business</header>
     <h1>Bem-vindo!</h1>
-    <p>Ative seu acesso e explore as ferramentas:</p>
+    <p>Faça login e ative seu acesso:</p>
+
+    <!-- Área de Login -->
+    <div id="loginArea">
+      <h2>Login</h2>
+      <input type="email" id="email" placeholder="E-mail"><br>
+      <input type="password" id="senha" placeholder="Senha"><br>
+      <button onclick="registrar()">Registrar</button>
+      <button onclick="login()">Entrar</button>
+      <button onclick="logout()">Sair</button>
+    </div>
 
     <!-- Pagamento -->
     <div id="pagamento">
@@ -64,7 +81,7 @@
       <div class="checkout-btn"></div>
     </div>
 
-    <!-- Cards (liberados após pagamento) -->
+    <!-- Cards (só aparecem após pagamento confirmado) -->
     <div id="cards" class="cards" style="display:none;">
       <div class="card" onclick="location.href='dados.html'">
         <div class="icon">⚙️</div>
@@ -78,12 +95,28 @@
   </div>
 
   <!-- Firebase -->
-  <script type="module" src="firebase.js"></script>
+  <script type="module">
+    import { registrarUsuario, loginUsuario, sair } from "./firebase.js";
+
+    window.registrar = () => {
+      const email = document.getElementById("email").value;
+      const senha = document.getElementById("senha").value;
+      registrarUsuario(email, senha);
+    };
+
+    window.login = () => {
+      const email = document.getElementById("email").value;
+      const senha = document.getElementById("senha").value;
+      loginUsuario(email, senha);
+    };
+
+    window.logout = () => sair();
+  </script>
+
   <!-- Mercado Pago SDK -->
   <script src="https://sdk.mercadopago.com/js/v2"></script>
-
   <script>
-    // Controle da splash
+    // Splash
     const splash=document.getElementById('splash');
     const home=document.getElementById('home');
     setTimeout(()=> splash.classList.add('fade-out'),2000);
@@ -92,12 +125,12 @@
       home.style.display='block';
     }, {once:true});
 
-    // Inicializa Mercado Pago
+    // Mercado Pago
     const mp = new MercadoPago("APP_USR-a984cf15-517f-4d10-a57f-f47617a3a10d", { locale: "pt-BR" });
 
     mp.checkout({
       preference: {
-        id: "ID_DA_PREFERENCIA" // gerado no backend
+        id: "ID_DA_PREFERENCIA" // ⚠️ Substitua pelo ID gerado no backend
       },
       render: {
         container: ".checkout-btn",
@@ -105,15 +138,11 @@
       }
     });
 
-    // 🔒 Exemplo de liberação após pagamento (mock)
-    // Na prática, você valida no Firebase ou Webhook do MP
+    // Função chamada pelo webhook/Firebase
     function liberarAcesso() {
       document.getElementById("pagamento").style.display = "none";
       document.getElementById("cards").style.display = "flex";
     }
-
-    // Simulando liberação automática (substituir pelo webhook real)
-    setTimeout(liberarAcesso, 5000);
   </script>
 </body>
 </html>
