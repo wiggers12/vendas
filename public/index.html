@@ -133,7 +133,7 @@
       try {
         const email = document.getElementById("email").value || "teste@dashcontrol.com";
 
-        const resp = await fetch("https://us-central1-dashcontrol-vendas.cloudfunctions.net/criarPreferencia", {
+        const resp = await fetch("https://us-central1-dashcontrol-vendas.cloudfunctions.net/api/create_preference", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email })
@@ -141,13 +141,18 @@
 
         const data = await resp.json();
 
-        mp.checkout({
-          preference: { id: data.id },
-          render: {
-            container: ".checkout-btn",
-            label: "Assinar Agora"
-          }
-        });
+        if (data.id) {
+          mp.checkout({
+            preference: { id: data.id },
+            render: {
+              container: ".checkout-btn",
+              label: "Assinar Agora"
+            }
+          });
+        } else {
+          console.error("Erro: não retornou id da preferência", data);
+        }
+
       } catch (err) {
         console.error("Erro ao iniciar checkout:", err);
       }
