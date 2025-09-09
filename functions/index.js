@@ -5,12 +5,14 @@ const mercadopago = require("mercadopago");
 admin.initializeApp();
 const db = admin.firestore();
 
-// Config Mercado Pago
+// Config Mercado Pago com Access Token (backend)
 mercadopago.configure({
-  access_token: "APP_USR-3928136166022826-090909-0888df7f4d56128a97071eee81703b4d-2668676373" // ⚠️ NÃO usar a Public Key, só Access Token privada
+  access_token: "APP_USR-3928136166022826-090909-0888df7f4d56128a97071eee81703b4d-2668676373" // ⚠️ mantenha privado
 });
 
-// Webhook Mercado Pago → atualiza Firestore
+// ==============================
+// 1) Webhook → confirma pagamento
+// ==============================
 exports.mercadoPagoWebhook = functions.https.onRequest(async (req, res) => {
   try {
     const { type, data } = req.body;
@@ -21,7 +23,6 @@ exports.mercadoPagoWebhook = functions.https.onRequest(async (req, res) => {
       if (payment.body.status === "approved") {
         const emailCliente = payment.body.payer.email;
 
-        // Procura usuário pelo email no Firestore
         const usersRef = db.collection("users");
         const snapshot = await usersRef.where("email", "==", emailCliente).get();
 
@@ -38,6 +39,39 @@ exports.mercadoPagoWebhook = functions.https.onRequest(async (req, res) => {
     return res.sendStatus(200);
   } catch (err) {
     console.error("Erro no webhook:", err);
+    return res.sendStatus(500);
+  }
+});
+
+// ========================================
+// 2) Criar preferência → gerar ID pro front
+// ========================================
+exports.criarPreferencia = functions.https.onRequest(async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    let preference = {
+      items: [
+        {
+          title: "Assinatura DashControl Business",
+          unit_price: 29.90,
+          quantity: 1,
+          currency_id: "BRL"
+        }
+      ],
+      payer: { email: email },
+      back_urls: {
+        success: "https://dashcontrol-vendas.web.app/",
+        failure: "https://dashcontrol-vendas.web.app/",
+        pending: "https://dashcontrol-vendas.web.app/"
+      },
+      auto_return: "approved"
+    };
+
+    const resposta = await mercadopago.preferences.create(preference);
+    return res.status(200).json({ id: resposta.body.id });
+  } catch (err) {
+    console.error("Erro ao criar preferência:", err);
     return res.sendStatus(500);
   }
 });

@@ -125,22 +125,38 @@
       home.style.display='block';
     }, {once:true});
 
-    // Mercado Pago
-    mercadopago.configure({
-  access_token: "APP_USR-b41ecc24-87a5-43df-9dd3-6aa56cc5647b"
-});
+    // Inicializa Mercado Pago (somente PUBLIC KEY aqui)
+    const mp = new MercadoPago("APP_USR-b41ecc24-87a5-43df-9dd3-6aa56cc5647b", { locale: "pt-BR" });
 
-    mp.checkout({
-      preference: {
-        id: "ID_DA_PREFERENCIA" // ⚠️ Substitua pelo ID gerado no backend
-      },
-      render: {
-        container: ".checkout-btn",
-        label: "Assinar Agora"
+    // Busca preferência no backend
+    async function iniciarCheckout() {
+      try {
+        const email = document.getElementById("email").value || "teste@dashcontrol.com";
+
+        const resp = await fetch("https://us-central1-dashcontrol-vendas.cloudfunctions.net/criarPreferencia", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email })
+        });
+
+        const data = await resp.json();
+
+        mp.checkout({
+          preference: { id: data.id },
+          render: {
+            container: ".checkout-btn",
+            label: "Assinar Agora"
+          }
+        });
+      } catch (err) {
+        console.error("Erro ao iniciar checkout:", err);
       }
-    });
+    }
 
-    // Função chamada pelo webhook/Firebase
+    // Chama ao carregar a página
+    iniciarCheckout();
+
+    // Liberação após webhook
     function liberarAcesso() {
       document.getElementById("pagamento").style.display = "none";
       document.getElementById("cards").style.display = "flex";
