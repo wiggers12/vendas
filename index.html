@@ -37,6 +37,10 @@
     .card:hover { transform:scale(1.05); background:#2c2c2c; }
     .card .icon { font-size:2.5rem; }
     .card h3 { margin-top:10px; color:#d4af37; }
+
+    /* Área de pagamento */
+    #pagamento { margin:40px auto; padding:20px; background:#1a1a1a; border-radius:12px; width:320px; }
+    #pagamento h2 { color:#d4af37; margin-bottom:10px; }
   </style>
 </head>
 <body>
@@ -51,9 +55,17 @@
   <div id="home" class="home">
     <header>📊 DashControl Business</header>
     <h1>Bem-vindo!</h1>
-    <p>Escolha uma das opções abaixo para começar:</p>
+    <p>Ative seu acesso e explore as ferramentas:</p>
 
-    <div class="cards">
+    <!-- Pagamento -->
+    <div id="pagamento">
+      <h2>Ative seu acesso</h2>
+      <p>Assine o DashControl Business por apenas R$29,90/mês</p>
+      <div class="checkout-btn"></div>
+    </div>
+
+    <!-- Cards (liberados após pagamento) -->
+    <div id="cards" class="cards" style="display:none;">
       <div class="card" onclick="location.href='dados.html'">
         <div class="icon">⚙️</div>
         <h3>Gerenciar Dados</h3>
@@ -67,6 +79,9 @@
 
   <!-- Firebase -->
   <script type="module" src="firebase.js"></script>
+  <!-- Mercado Pago SDK -->
+  <script src="https://sdk.mercadopago.com/js/v2"></script>
+
   <script>
     // Controle da splash
     const splash=document.getElementById('splash');
@@ -76,6 +91,29 @@
       splash.style.display='none';
       home.style.display='block';
     }, {once:true});
+
+    // Inicializa Mercado Pago
+    const mp = new MercadoPago("APP_USR-a984cf15-517f-4d10-a57f-f47617a3a10d", { locale: "pt-BR" });
+
+    mp.checkout({
+      preference: {
+        id: "ID_DA_PREFERENCIA" // gerado no backend
+      },
+      render: {
+        container: ".checkout-btn",
+        label: "Assinar Agora"
+      }
+    });
+
+    // 🔒 Exemplo de liberação após pagamento (mock)
+    // Na prática, você valida no Firebase ou Webhook do MP
+    function liberarAcesso() {
+      document.getElementById("pagamento").style.display = "none";
+      document.getElementById("cards").style.display = "flex";
+    }
+
+    // Simulando liberação automática (substituir pelo webhook real)
+    setTimeout(liberarAcesso, 5000);
   </script>
 </body>
 </html>
